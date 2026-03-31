@@ -1,9 +1,19 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import axios from 'axios';
 import '../css/Home.css'; 
 import '../css/StaticPages.css';
 
 function Home() {
+  const [reviews, setReviews] = useState([]);
+
+  useEffect(() => {
+    // Fetch dynamic top reviews for the homepage
+    axios.get('/api/reviews')
+      .then((res) => setReviews(res.data))
+      .catch((err) => console.log('Could not load reviews'));
+  }, []);
+
   return (
     <div>
       {/* Massive Hero Section */}
@@ -44,6 +54,51 @@ function Home() {
           </div>
 
         </div>
+      </div>
+
+      {/* Dynamic Reviews Section */}
+      <div className="reviews-section">
+        <div className="container">
+          <div style={{ textAlign: 'center' }}>
+            <h2 style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>What Our Customers Say</h2>
+            <p style={{ color: 'var(--text-muted)', fontSize: '1.125rem', maxWidth: '600px', margin: '0 auto' }}>
+              Real reviews from real people who booked professionals through our platform.
+            </p>
+          </div>
+
+          <div className="reviews-grid">
+            {reviews.length === 0 ? (
+              <p style={{ textAlign: 'center', gridColumn: '1 / -1', color: 'var(--text-muted)' }}>Be the first to leave a review!</p>
+            ) : (
+              reviews.map((r) => (
+                <div key={r._id} className="review-card">
+                  <div className="stars">
+                    {'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}
+                  </div>
+                  <p className="review-quote">"{r.comment}"</p>
+                  <div className="review-author">
+                    <div className="author-initial">{r.customerId?.name?.charAt(0) || '?'}</div>
+                    <div className="author-info">
+                      <h4>{r.customerId?.name || 'Anonymous User'}</h4>
+                      <span>Booked: {r.bookingId?.serviceId?.title || 'Unknown Service'}</span>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Why Choose Us CTA Banner */}
+      <div style={{ background: 'var(--text-dark)', color: 'white', padding: '5rem 1rem', textAlign: 'center' }}>
+        <h2 style={{ fontSize: '2.5rem', marginBottom: '1.5rem', color: 'white' }}>Ready to get started?</h2>
+        <p style={{ margin: '0 auto 2.5rem', maxWidth: '500px', color: '#94a3b8' }}>
+          Whether you need something fixed, built, or cleaned, our network of professionals is ready to help today.
+        </p>
+        <Link to="/register" className="btn btn-primary" style={{ fontSize: '1.1rem', padding: '1rem 2.5rem', borderRadius: '50px' }}>
+          Join the Platform Now
+        </Link>
       </div>
 
     </div>

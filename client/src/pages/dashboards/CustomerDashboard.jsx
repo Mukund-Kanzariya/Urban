@@ -47,6 +47,21 @@ function CustomerDashboard() {
     }
   };
 
+  const handleLeaveReview = async (bookingId) => {
+    try {
+      const rating = parseInt(prompt('Rate this service (1 to 5 stars):'), 10);
+      if (isNaN(rating) || rating < 1 || rating > 5) return alert('Invalid rating! Must be a number from 1 to 5.');
+      
+      const comment = prompt('Leave a comment about your experience:');
+      if (!comment) return;
+
+      await axios.post('/api/reviews', { bookingId, rating, comment });
+      alert('Review submitted successfully! Thank you for your feedback.');
+    } catch (error) {
+       alert(error.response?.data?.message || 'Failed to submit review');
+    }
+  };
+
   if (loading) return <div className="loading-spinner">Loading Dashboard...</div>;
 
   return (
@@ -71,7 +86,14 @@ function CustomerDashboard() {
                     <p><strong>Provider:</strong> {b.providerId?.name}</p>
                     <p><strong>Date & Time:</strong> {b.date} at {b.time}</p>
                     <p><strong>Price:</strong> ${b.serviceId?.price}</p>
-                    <span className={`status-badge status-${b.status.toLowerCase()}`}>{b.status}</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px' }}>
+                      <span className={`status-badge status-${b.status.toLowerCase()}`}>{b.status}</span>
+                      {b.status === 'Completed' && (
+                        <button className="btn btn-primary btn-sm" onClick={() => handleLeaveReview(b._id)}>
+                          Leave a Review
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}

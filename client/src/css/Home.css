@@ -88,3 +88,78 @@
 .service-detail-item span {
   color: var(--text-muted);
 }
+
+/* Reviews Section Specifics */
+.reviews-section {
+  background: var(--bg-surface);
+  padding: 5rem 1rem;
+  box-shadow: 0 -4px 10px rgba(0,0,0,0.02);
+}
+
+.reviews-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 2.5rem;
+  margin-top: 3rem;
+}
+
+.review-card {
+  background: var(--bg-page);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 2rem;
+  transition: var(--transition);
+  position: relative;
+}
+
+.review-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+  border-color: #e2e8f0;
+}
+
+.review-quote {
+  font-style: italic;
+  color: var(--text-dark);
+  font-size: 1.125rem;
+  margin-bottom: 1.5rem;
+  line-height: 1.7;
+}
+
+.review-author {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  border-top: 1px solid var(--border);
+  padding-top: 1rem;
+}
+
+.author-initial {
+  width: 40px;
+  height: 40px;
+  background: var(--primary);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.25rem;
+}
+
+.author-info h4 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.author-info span {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.stars {
+  color: var(--warning);
+  letter-spacing: 2px;
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
+}

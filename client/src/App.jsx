@@ -14,6 +14,7 @@ import AdminDashboard from './pages/dashboards/AdminDashboard';
 import About from './pages/About';
 import Contact from './pages/Contact';
 import Services from './pages/Services';
+import Profile from './pages/Profile';
 // ** Step 7: Critical Authorization Link! **
 // If we have a JWT token stored locally, we forcefully attach it
 // to EVERY SINGLE Axios request we ever send securely in the "Headers"
@@ -43,6 +44,7 @@ function App() {
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/services" element={<Services />} />
+          <Route path="/profile" element={<Profile />} />
         </Routes>
       </div>
     </BrowserRouter>

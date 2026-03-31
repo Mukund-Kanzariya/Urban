@@ -3,6 +3,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const path = require('path');
 require('dotenv').config(); // Load variables from the .env file
 
 // Initialize express app (creating our server instance)
@@ -13,6 +14,9 @@ const app = express();
 app.use(express.json());
 // Allows our React frontend to securely make API requests to this backend
 app.use(cors());
+
+// Expose the 'uploads' directory directly so the React frontend can grab the profile pictures
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // --- Import Route Files ---
 const authRoutes = require('./routes/auth');
@@ -28,6 +32,8 @@ app.use('/api/services', serviceRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/contacts', contactRoutes);
+app.use('/api/profiles', require('./routes/profiles'));
+app.use('/api/reviews', require('./routes/reviews'));
 
 // --- Basic Route ---
 // A simple REST API endpoint to check if the server is healthy

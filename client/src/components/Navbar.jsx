@@ -31,6 +31,7 @@ function Navbar() {
         {token && user ? (
            <>
              <Link to={`/dashboard/${user.role}`} className="nav-link nav-btn-primary">Dashboard</Link>
+             <Link to="/profile" className="nav-link" style={{ fontWeight: '600' }}>My Profile</Link>
              <button onClick={handleLogout} className="btn-logout">Logout</button>
            </>
         ) : (
