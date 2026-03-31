@@ -7,7 +7,7 @@ function AdminDashboard() {
   const [data, setData] = useState({ users: [], services: [], bookings: [], contacts: [] });
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('metrics'); // metrics, users, services, bookings
-  const user = JSON.parse(localStorage.getItem('user')) || {};
+  const user = JSON.parse(sessionStorage.getItem('user')) || {};
   const navigate = useNavigate();
 
   useEffect(() => {

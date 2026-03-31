@@ -7,7 +7,7 @@ function ProviderDashboard() {
   const [bookings, setBookings] = useState([]);
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
-  const user = JSON.parse(localStorage.getItem('user')) || {};
+  const user = JSON.parse(sessionStorage.getItem('user')) || {};
   const navigate = useNavigate();
 
   const [newService, setNewService] = useState({

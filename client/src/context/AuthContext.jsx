@@ -7,7 +7,7 @@ export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
 
     useEffect(() => {
-        const storedUser = localStorage.getItem('user');
+        const storedUser = sessionStorage.getItem('user');
         if (storedUser) {
             setUser(JSON.parse(storedUser));
         }
@@ -16,20 +16,20 @@ export const AuthProvider = ({ children }) => {
     const login = async (email, password) => {
         const { data } = await axios.post('/api/auth/login', { email, password });
         setUser(data);
-        localStorage.setItem('user', JSON.stringify(data));
+        sessionStorage.setItem('user', JSON.stringify(data));
         return data; // Return data for component usage
     };
 
     const register = async (userData) => {
         const { data } = await axios.post('/api/auth/register', userData);
         setUser(data);
-        localStorage.setItem('user', JSON.stringify(data));
+        sessionStorage.setItem('user', JSON.stringify(data));
         return data;
     };
 
     const logout = () => {
         setUser(null);
-        localStorage.removeItem('user');
+        sessionStorage.removeItem('user');
     };
 
     // Configure Axios Interceptor for token attachment

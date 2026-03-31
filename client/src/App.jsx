@@ -18,7 +18,7 @@ import Profile from './pages/Profile';
 // ** Step 7: Critical Authorization Link! **
 // If we have a JWT token stored locally, we forcefully attach it
 // to EVERY SINGLE Axios request we ever send securely in the "Headers"
-const token = localStorage.getItem('token');
+const token = sessionStorage.getItem('token');
 if (token) {
   axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 }
@@ -29,9 +29,9 @@ function App() {
     <BrowserRouter>
       {/* Navbar sits outside Routes so it always shows up on every page */}
       <Navbar />
-      
+
       <div className="container">
-        
+
         {/* The Routes container controls which Page shows up based on the URL */}
         <Routes>
           {/* Think of these essentially as if-statements mapping URLs to Pages! */}

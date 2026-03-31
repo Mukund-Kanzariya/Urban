@@ -4,7 +4,7 @@ import axios from 'axios';
 function Dashboard() {
   // Grab the simple cached user out of browser storage
   // If no user exists, fallback to an empty {} object to avoid crashes
-  const user = JSON.parse(localStorage.getItem('user')) || {};
+  const user = JSON.parse(sessionStorage.getItem('user')) || {};
   const [bookings, setBookings] = useState([]);
 
   useEffect(() => {

@@ -5,15 +5,15 @@ import '../css/Navbar.css';
 
 function Navbar() {
   const navigate = useNavigate();
-  // We check localStorage to see if a token exists for a logged-in user
-  const token = localStorage.getItem('token'); 
+  // We check sessionStorage to see if a token exists for a logged-in user
+  const token = sessionStorage.getItem('token'); 
 
-  const user = JSON.parse(localStorage.getItem('user')) || null;
+  const user = JSON.parse(sessionStorage.getItem('user')) || null;
 
   // Simple function to destroy the session
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('user');
     navigate('/login'); // Redirect them!
   };
 

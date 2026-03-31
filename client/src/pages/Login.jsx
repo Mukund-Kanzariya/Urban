@@ -19,8 +19,8 @@ function Login() {
       const response = await axios.post('/api/auth/login', { email, password });
       
       // 2. The server responds with our Token! Let's securely save it locally
-      localStorage.setItem('token', response.data.token);
-      localStorage.setItem('user', JSON.stringify(response.data.user)); // Also save name/role
+      sessionStorage.setItem('token', response.data.token);
+      sessionStorage.setItem('user', JSON.stringify(response.data.user)); // Also save name/role
       
       // 3. Immediately redirect to Dashboard, and force hard refresh to update Navbar
       navigate(`/dashboard/${response.data.user.role}`);

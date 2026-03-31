@@ -26,7 +26,7 @@ function Profile() {
 
   useEffect(() => {
     // If no token exists, immediately kick them out to login!
-    if (!localStorage.getItem('token')) {
+    if (!sessionStorage.getItem('token')) {
       navigate('/login');
       return;
     }

@@ -16,7 +16,7 @@ function Services() {
   }, []);
 
   const handleBook = async (serviceId, providerId) => {
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
     
     // Smooth redirect for unauthenticated users instead of harsh alerts!
     if (!token) {
