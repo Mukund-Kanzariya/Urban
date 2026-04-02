@@ -15,6 +15,8 @@ import About from './pages/About';
 import Contact from './pages/Contact';
 import Services from './pages/Services';
 import Profile from './pages/Profile';
+import AddReview from './pages/AddReview';
+
 // ** Step 7: Critical Authorization Link! **
 // If we have a JWT token stored locally, we forcefully attach it
 // to EVERY SINGLE Axios request we ever send securely in the "Headers"
@@ -35,16 +37,24 @@ function App() {
         {/* The Routes container controls which Page shows up based on the URL */}
         <Routes>
           {/* Think of these essentially as if-statements mapping URLs to Pages! */}
+          {/* Standard Navigation Pages */}
           <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/dashboard/customer" element={<CustomerDashboard />} />
-          <Route path="/dashboard/provider" element={<ProviderDashboard />} />
-          <Route path="/dashboard/admin" element={<AdminDashboard />} />
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/services" element={<Services />} />
+
+          {/* Secure User Management Pages */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          
+          {/* Universal Authenticated Routes */}
           <Route path="/profile" element={<Profile />} />
+          <Route path="/add-review/:bookingId" element={<AddReview />} />
+
+          {/* Context-Aware Dynamic Dashboard Route */}
+          <Route path="/dashboard/customer" element={<CustomerDashboard />} />
+          <Route path="/dashboard/provider" element={<ProviderDashboard />} />
+          <Route path="/dashboard/admin" element={<AdminDashboard />} />
         </Routes>
       </div>
     </BrowserRouter>

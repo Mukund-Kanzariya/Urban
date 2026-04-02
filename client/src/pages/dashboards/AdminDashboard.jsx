@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import '../../css/Dashboards.css';
 
 function AdminDashboard() {
-  const [data, setData] = useState({ users: [], services: [], bookings: [], contacts: [] });
+  const [data, setData] = useState({ users: [], services: [], bookings: [], contacts: [], reviews: [] });
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('metrics'); // metrics, users, services, bookings
   const user = JSON.parse(sessionStorage.getItem('user')) || {};
@@ -20,17 +20,19 @@ function AdminDashboard() {
 
   const fetchData = async () => {
     try {
-      const [usersRes, servicesRes, bookingsRes, contactsRes] = await Promise.all([
+      const [usersRes, servicesRes, bookingsRes, contactsRes, reviewsRes] = await Promise.all([
         axios.get('/api/users'),
         axios.get('/api/services'),
         axios.get('/api/bookings'),
-        axios.get('/api/contacts')
+        axios.get('/api/contacts'),
+        axios.get('/api/reviews/all')
       ]);
       setData({
         users: usersRes.data,
         services: servicesRes.data,
         bookings: bookingsRes.data,
-        contacts: contactsRes.data
+        contacts: contactsRes.data,
+        reviews: reviewsRes.data
       });
       setLoading(false);
     } catch (err) {
@@ -66,6 +68,15 @@ function AdminDashboard() {
     }
   };
 
+  const deleteReview = async (id) => {
+    if (window.confirm('Delete this review permanently?')) {
+      try {
+        await axios.delete(`/api/reviews/${id}`);
+        fetchData();
+      } catch (err) { alert('Failed to delete review'); }
+    }
+  };
+
   if (loading) return <div className="loading-spinner">Loading Admin Panel...</div>;
 
   return (
@@ -78,6 +89,7 @@ function AdminDashboard() {
           <button className={`tab ${activeTab === 'services' ? 'active' : ''}`} onClick={() => setActiveTab('services')}>Services</button>
           <button className={`tab ${activeTab === 'bookings' ? 'active' : ''}`} onClick={() => setActiveTab('bookings')}>Bookings</button>
           <button className={`tab ${activeTab === 'contacts' ? 'active' : ''}`} onClick={() => setActiveTab('contacts')}>Messages</button>
+          <button className={`tab ${activeTab === 'reviews' ? 'active' : ''}`} onClick={() => setActiveTab('reviews')}>Reviews</button>
         </div>
       </header>
 
@@ -96,6 +108,10 @@ function AdminDashboard() {
             <div className="metric-card">
               <h3>Total Bookings</h3>
               <p className="metric-number">{data.bookings.length}</p>
+            </div>
+            <div className="metric-card">
+              <h3>Total Reviews</h3>
+              <p className="metric-number">{data.reviews.length}</p>
             </div>
           </div>
         )}
@@ -187,6 +203,36 @@ function AdminDashboard() {
                 ))}
                 {data.contacts.length === 0 && (
                   <tr><td colSpan="5" className="empty-state">No messages received yet.</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* Reviews Table */}
+        {activeTab === 'reviews' && (
+          <div className="data-table-container">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Customer</th><th>Service</th><th>Provider</th><th>Rating</th><th>Comment</th><th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.reviews.map(r => (
+                  <tr key={r._id}>
+                    <td>{r.customerId?.name || 'Unknown'}</td>
+                    <td>{r.bookingId?.serviceId?.title || 'Unknown'}</td>
+                    <td>{r.bookingId?.providerId?.name || 'Unknown'}</td>
+                    <td style={{ color: '#fbbf24', fontSize: '1.2rem' }}>
+                      {'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}
+                    </td>
+                    <td style={{ maxWidth: '300px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.comment}</td>
+                    <td><button className="btn btn-danger btn-sm" onClick={() => deleteReview(r._id)}>Delete</button></td>
+                  </tr>
+                ))}
+                {data.reviews.length === 0 && (
+                  <tr><td colSpan="6" className="empty-state">No reviews have been written yet.</td></tr>
                 )}
               </tbody>
             </table>

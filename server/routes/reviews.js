@@ -25,7 +25,7 @@ router.post('/', verifyToken, async (req, res) => {
         }
         
         // 3. Ensure booking is completed
-        if (booking.status !== 'Completed') {
+        if (booking.status.toLowerCase() !== 'completed') {
             return res.status(400).json({ message: 'Service must be completed before reviewing' });
         }
 
@@ -65,6 +65,80 @@ router.get('/', async (req, res) => {
             })
             .sort({ _id: -1 })
             .limit(6);
+
+        res.json(reviews);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// @route   GET /api/reviews/all
+// @desc    Get all reviews regardless of rating for the Admin panel
+// @access  Private/Admin
+router.get('/all', verifyToken, async (req, res) => {
+    try {
+        if (req.user.role !== 'admin') {
+            return res.status(403).json({ message: 'Only admins can fetch all reviews' });
+        }
+
+        const reviews = await Review.find()
+            .populate('customerId', 'name email') // Pulls in the customer's name!
+            .populate({
+                path: 'bookingId',
+                select: 'serviceId providerId',
+                populate: [
+                    { path: 'serviceId', select: 'title' },
+                    { path: 'providerId', select: 'name' }
+                ] 
+            })
+            .sort({ _id: -1 });
+
+        res.json(reviews);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// @route   DELETE /api/reviews/:id
+// @desc    Delete a specific review
+// @access  Private/Admin
+router.delete('/:id', verifyToken, async (req, res) => {
+    try {
+        if (req.user.role !== 'admin') {
+            return res.status(403).json({ message: 'Only admins can delete reviews' });
+        }
+
+        const deletedReview = await Review.findByIdAndDelete(req.params.id);
+        if (!deletedReview) return res.status(404).json({ message: 'Review not found' });
+
+        res.json({ message: 'Review successfully deleted' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// @route   GET /api/reviews/provider
+// @desc    Get all reviews strictly linked to bookings where this user is the provider
+// @access  Private/Provider
+router.get('/provider', verifyToken, async (req, res) => {
+    try {
+        if (req.user.role !== 'provider') {
+            return res.status(403).json({ message: 'Only providers can fetch their own reviews' });
+        }
+
+        // 1. Find every single booking this provider has ever been assigned to
+        const myBookings = await Booking.find({ providerId: req.user._id }, '_id');
+        const bookingIds = myBookings.map(b => b._id);
+
+        // 2. Query the Review collection rigidly for ANY review tied to those specific bookings
+        const reviews = await Review.find({ bookingId: { $in: bookingIds } })
+            .populate('customerId', 'name') 
+            .populate('bookingId', 'serviceId date') // Let's pull dates and service ids
+            .populate({
+                path: 'bookingId',
+                populate: { path: 'serviceId', select: 'title' }
+            })
+            .sort({ _id: -1 });
 
         res.json(reviews);
     } catch (error) {
