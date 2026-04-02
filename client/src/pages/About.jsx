@@ -24,8 +24,17 @@ function About() {
           </p>
         </div>
         
-        <div className="about-image-placeholder" style={{ background: 'var(--border)', borderRadius: '16px', minHeight: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <span style={{ color: 'var(--text-muted)' }}>[ Team Image Placeholder ]</span>
+        <div>
+          <img 
+            src="/images/about-team.png" 
+            alt="Our Team" 
+            style={{ 
+              width: '100%', 
+              borderRadius: '8px', 
+              objectFit: 'cover',
+              border: '1px solid var(--border)'
+            }} 
+          />
         </div>
       </div>
 

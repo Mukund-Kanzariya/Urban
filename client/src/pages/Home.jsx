@@ -4,11 +4,18 @@ import axios from 'axios';
 import '../css/Home.css'; 
 import '../css/StaticPages.css';
 
+// Map service categories to their images
+const categoryImages = {
+  'Plumbing': '/images/plumbing.png',
+  'Electrical': '/images/electrical.png',
+  'Cleaning': '/images/cleaning.png',
+  'Carpentry': '/images/carpentry.png',
+};
+
 function Home() {
   const [reviews, setReviews] = useState([]);
 
   useEffect(() => {
-    // Fetch dynamic top reviews for the homepage
     axios.get('/api/reviews')
       .then((res) => setReviews(res.data))
       .catch((err) => console.log('Could not load reviews'));
@@ -16,53 +23,127 @@ function Home() {
 
   return (
     <div>
-      {/* Massive Hero Section */}
-      <div className="home-hero" style={{ padding: '6rem 1rem', background: 'linear-gradient(to right, #0ea5e9, #10b981)', color: 'white', borderBottom: 'none' }}>
-        <h1 style={{ fontSize: '3.5rem', fontWeight: '800', marginBottom: '1.5rem', color: 'white' }}>
-          Your Trusted Local Professionals
-        </h1>
-        <p style={{ fontSize: '1.25rem', color: 'rgba(255,255,255,0.9)', maxWidth: '700px', margin: '0 auto 2.5rem' }}>
-          Instantly book top-rated cleaners, plumbers, electricians, and more. 
-          Transparent pricing and verified community reviews.
-        </p>
-        <Link to="/services" className="btn" style={{ fontSize: '1.1rem', padding: '1rem 2rem', background: 'white', color: '#0ea5e9', fontWeight: 'bold' }}>
-          Browse All Services
-        </Link>
-      </div>
-
-      {/* How It Works Section */}
-      <div className="container" style={{ textAlign: 'center', padding: '5rem 1rem' }}>
-        <h2 style={{ fontSize: '2.5rem', marginBottom: '3rem' }}>How It Works</h2>
-        <div className="about-grid" style={{ gridTemplateColumns: '1fr 1fr 1fr', gap: '2rem' }}>
-          
-          <div style={{ padding: '2rem', background: 'var(--bg-surface)', borderRadius: '16px', boxShadow: 'var(--shadow-sm)' }}>
-            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🔍</div>
-            <h3 style={{ marginBottom: '1rem' }}>1. Find a Pro</h3>
-            <p style={{ color: 'var(--text-muted)' }}>Browse thousands of verified local professionals based on your specific needs and location.</p>
-          </div>
-
-          <div style={{ padding: '2rem', background: 'var(--bg-surface)', borderRadius: '16px', boxShadow: 'var(--shadow-sm)' }}>
-            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📅</div>
-            <h3 style={{ marginBottom: '1rem' }}>2. Book Instantly</h3>
-            <p style={{ color: 'var(--text-muted)' }}>Choose an available time slot and book securely directly through our transparent platform.</p>
-          </div>
-
-          <div style={{ padding: '2rem', background: 'var(--bg-surface)', borderRadius: '16px', boxShadow: 'var(--shadow-sm)' }}>
-            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>✨</div>
-            <h3 style={{ marginBottom: '1rem' }}>3. Relax</h3>
-            <p style={{ color: 'var(--text-muted)' }}>The professional arrives and completes the job. You review and pay only when satisfied.</p>
-          </div>
-
+      {/* Hero Section with Background Image */}
+      <div style={{
+        position: 'relative',
+        minHeight: '400px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        textAlign: 'center',
+        overflow: 'hidden'
+      }}>
+        <img 
+          src="/images/hero-banner.png" 
+          alt="Professional home service" 
+          style={{
+            position: 'absolute',
+            top: 0, left: 0, width: '100%', height: '100%',
+            objectFit: 'cover',
+            zIndex: 0
+          }}
+        />
+        <div style={{
+          position: 'absolute',
+          top: 0, left: 0, width: '100%', height: '100%',
+          background: 'rgba(0,0,0,0.55)',
+          zIndex: 1
+        }}></div>
+        <div style={{ position: 'relative', zIndex: 2, padding: '2rem 1rem', maxWidth: '600px' }}>
+          <h1 style={{ fontSize: '2.2rem', fontWeight: '700', color: '#fff', marginBottom: '0.75rem', letterSpacing: '-0.5px' }}>
+            Find Trusted Local Professionals
+          </h1>
+          <p style={{ fontSize: '1rem', color: 'rgba(255,255,255,0.85)', marginBottom: '1.5rem', lineHeight: '1.6' }}>
+            Book top-rated cleaners, plumbers, electricians, and more. 
+            Transparent pricing, verified reviews.
+          </p>
+          <Link to="/services" className="btn btn-primary" style={{ padding: '0.6rem 1.5rem' }}>
+            Browse Services
+          </Link>
         </div>
       </div>
 
-      {/* Dynamic Reviews Section */}
+      {/* Service Categories with Images */}
+      <div className="container" style={{ padding: '2.5rem 1rem' }}>
+        <h2 style={{ textAlign: 'center', marginBottom: '0.4rem', fontSize: '1.35rem' }}>Our Services</h2>
+        <p style={{ textAlign: 'center', color: 'var(--text-muted)', marginBottom: '1.5rem', fontSize: '0.9rem' }}>Professional help for every need around your home</p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem' }}>
+          {Object.entries(categoryImages).map(([name, img]) => (
+            <Link to="/services" key={name} style={{ textDecoration: 'none', color: 'inherit' }}>
+              <div style={{ 
+                background: '#fff', 
+                border: '1px solid var(--border)', 
+                borderRadius: '8px', 
+                overflow: 'hidden',
+                transition: 'all 0.15s ease'
+              }}
+              onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.08)'; e.currentTarget.style.borderColor = '#ccc'; }}
+              onMouseLeave={e => { e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.borderColor = 'var(--border)'; }}
+              >
+                <img 
+                  src={img} 
+                  alt={name} 
+                  style={{ width: '100%', height: '160px', objectFit: 'cover', display: 'block' }}
+                />
+                <div style={{ padding: '0.6rem', textAlign: 'center' }}>
+                  <h3 style={{ fontSize: '0.9rem', margin: 0, fontWeight: '600' }}>{name}</h3>
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      {/* How It Works */}
+      <div style={{ background: '#fff', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)' }}>
+        <div className="container" style={{ padding: '2.5rem 1rem' }}>
+          <h2 style={{ textAlign: 'center', marginBottom: '1.5rem', fontSize: '1.35rem' }}>How It Works</h2>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1.25rem' }}>
+            
+            <div style={{ padding: '1.25rem', textAlign: 'center' }}>
+              <div style={{ 
+                width: '48px', height: '48px', borderRadius: '50%', 
+                background: 'var(--primary-light)', color: 'var(--primary)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '1.25rem', fontWeight: '700', margin: '0 auto 0.75rem'
+              }}>1</div>
+              <h3 style={{ fontSize: '1rem', marginBottom: '0.4rem' }}>Find a Pro</h3>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', lineHeight: '1.55' }}>Browse verified local professionals based on your needs and location.</p>
+            </div>
+
+            <div style={{ padding: '1.25rem', textAlign: 'center' }}>
+              <div style={{ 
+                width: '48px', height: '48px', borderRadius: '50%', 
+                background: 'var(--primary-light)', color: 'var(--primary)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '1.25rem', fontWeight: '700', margin: '0 auto 0.75rem'
+              }}>2</div>
+              <h3 style={{ fontSize: '1rem', marginBottom: '0.4rem' }}>Book Instantly</h3>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', lineHeight: '1.55' }}>Choose a time slot and book securely through our platform.</p>
+            </div>
+
+            <div style={{ padding: '1.25rem', textAlign: 'center' }}>
+              <div style={{ 
+                width: '48px', height: '48px', borderRadius: '50%', 
+                background: 'var(--primary-light)', color: 'var(--primary)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '1.25rem', fontWeight: '700', margin: '0 auto 0.75rem'
+              }}>3</div>
+              <h3 style={{ fontSize: '1rem', marginBottom: '0.4rem' }}>Get It Done</h3>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', lineHeight: '1.55' }}>The professional completes the job. Review and pay when satisfied.</p>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      {/* Reviews Section */}
       <div className="reviews-section">
         <div className="container">
           <div style={{ textAlign: 'center' }}>
-            <h2 style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>What Our Customers Say</h2>
-            <p style={{ color: 'var(--text-muted)', fontSize: '1.125rem', maxWidth: '600px', margin: '0 auto' }}>
-              Real reviews from real people who booked professionals through our platform.
+            <h2 style={{ fontSize: '1.35rem', marginBottom: '0.4rem' }}>Customer Reviews</h2>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+              Real feedback from people who used our platform.
             </p>
           </div>
 
@@ -90,14 +171,14 @@ function Home() {
         </div>
       </div>
 
-      {/* Why Choose Us CTA Banner */}
-      <div style={{ background: 'var(--text-dark)', color: 'white', padding: '5rem 1rem', textAlign: 'center' }}>
-        <h2 style={{ fontSize: '2.5rem', marginBottom: '1.5rem', color: 'white' }}>Ready to get started?</h2>
-        <p style={{ margin: '0 auto 2.5rem', maxWidth: '500px', color: '#94a3b8' }}>
-          Whether you need something fixed, built, or cleaned, our network of professionals is ready to help today.
+      {/* CTA */}
+      <div style={{ background: '#1a1a1a', color: '#fff', padding: '3rem 1rem', textAlign: 'center' }}>
+        <h2 style={{ fontSize: '1.5rem', marginBottom: '0.6rem', color: '#fff' }}>Ready to get started?</h2>
+        <p style={{ margin: '0 auto 1.5rem', maxWidth: '450px', color: '#999', fontSize: '0.9rem' }}>
+          Whether you need something fixed, built, or cleaned — our professionals are ready.
         </p>
-        <Link to="/register" className="btn btn-primary" style={{ fontSize: '1.1rem', padding: '1rem 2.5rem', borderRadius: '50px' }}>
-          Join the Platform Now
+        <Link to="/register" className="btn btn-primary">
+          Join Now
         </Link>
       </div>
 

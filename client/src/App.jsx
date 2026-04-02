@@ -32,31 +32,29 @@ function App() {
       {/* Navbar sits outside Routes so it always shows up on every page */}
       <Navbar />
 
-      <div className="container">
+      {/* Routes container - each page manages its own layout */}
+      <Routes>
+        {/* Home page renders full-width (no container) */}
+        <Route path="/" element={<Home />} />
 
-        {/* The Routes container controls which Page shows up based on the URL */}
-        <Routes>
-          {/* Think of these essentially as if-statements mapping URLs to Pages! */}
-          {/* Standard Navigation Pages */}
-          <Route path="/" element={<Home />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/services" element={<Services />} />
+        {/* These pages have their own containers */}
+        <Route path="/about" element={<About />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/services" element={<Services />} />
 
-          {/* Secure User Management Pages */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          
-          {/* Universal Authenticated Routes */}
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/add-review/:bookingId" element={<AddReview />} />
+        {/* Auth pages */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        
+        {/* Authenticated Routes - wrapped in container */}
+        <Route path="/profile" element={<div className="container"><Profile /></div>} />
+        <Route path="/add-review/:bookingId" element={<div className="container"><AddReview /></div>} />
 
-          {/* Context-Aware Dynamic Dashboard Route */}
-          <Route path="/dashboard/customer" element={<CustomerDashboard />} />
-          <Route path="/dashboard/provider" element={<ProviderDashboard />} />
-          <Route path="/dashboard/admin" element={<AdminDashboard />} />
-        </Routes>
-      </div>
+        {/* Dashboard Routes - wrapped in container */}
+        <Route path="/dashboard/customer" element={<div className="container"><CustomerDashboard /></div>} />
+        <Route path="/dashboard/provider" element={<div className="container"><ProviderDashboard /></div>} />
+        <Route path="/dashboard/admin" element={<div className="container"><AdminDashboard /></div>} />
+      </Routes>
     </BrowserRouter>
   );
 }
