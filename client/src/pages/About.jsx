@@ -5,7 +5,7 @@ function About() {
   return (
     <div className="static-page-container">
       <div className="static-header">
-        <h1>About LocalService</h1>
+        <h1>About ServiceHub</h1>
         <p>We are on a mission to connect communities by providing a reliable, transparent platform for local freelance professionals and businesses.</p>
       </div>
 
@@ -13,7 +13,7 @@ function About() {
         <div className="about-content">
           <h3>Our Story</h3>
           <p>
-            Founded in 2026, LocalService began with a simple idea: finding a trusted plumber shouldn't
+            Founded in 2026, ServiceHub began with a simple idea: finding a trusted plumber shouldn't
             take three days of calling around. We wanted to build a centralized hub where professionals
             can showcase their actual prices and skills, and customers can book instantly.
           </p>
