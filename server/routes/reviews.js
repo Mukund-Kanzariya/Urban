@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Review = require('../models/Review');
 const Booking = require('../models/Booking');
+const Profile = require('../models/Profile');
 const verifyToken = require('../middleware/auth'); // Our standard auth middleware
 
 // @route   POST /api/reviews
@@ -82,7 +83,7 @@ router.get('/all', verifyToken, async (req, res) => {
         }
 
         const reviews = await Review.find()
-            .populate('customerId', 'name email') // Pulls in the customer's name!
+            .populate('customerId', 'name email')
             .populate({
                 path: 'bookingId',
                 select: 'serviceId providerId',
@@ -93,7 +94,42 @@ router.get('/all', verifyToken, async (req, res) => {
             })
             .sort({ _id: -1 });
 
-        res.json(reviews);
+        // Since we can't easily deep populate Profiles from here without more complex setup,
+        // we'll fetch the profiles separately and map them for the admin view.
+        const customerIds = reviews.map(r => r.customerId?._id);
+        const profiles = await Profile.find({ userId: { $in: customerIds } }, 'userId profilePicture');
+        
+        const reviewsWithPhotos = reviews.map(r => {
+            const profile = profiles.find(p => p.userId.toString() === r.customerId?._id.toString());
+            const plainReview = r.toObject();
+            if (plainReview.customerId) {
+                plainReview.customerId.profilePicture = profile ? profile.profilePicture : '';
+            }
+            return plainReview;
+        });
+
+        res.json(reviewsWithPhotos);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// @route   PUT /api/reviews/:id
+// @desc    Update a review's rating and comment
+// @access  Private/Admin
+router.put('/:id', verifyToken, async (req, res) => {
+    try {
+        if (req.user.role !== 'admin') {
+            return res.status(403).json({ message: 'Only admins can update reviews' });
+        }
+        const { rating, comment } = req.body;
+        const updated = await Review.findByIdAndUpdate(
+            req.params.id,
+            { rating, comment },
+            { new: true, runValidators: true }
+        );
+        if (!updated) return res.status(404).json({ message: 'Review not found' });
+        res.json(updated);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

@@ -137,6 +137,28 @@ button:hover, .btn:hover {
   border-radius: 4px;
 }
 
+.btn-warning {
+  background-color: #4f46e5;
+  color: #fff;
+  border: 1px solid #4f46e5;
+}
+
+.btn-warning:hover {
+  background-color: #4338ca;
+  border-color: #4338ca;
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+
+.btn-secondary:hover {
+  background: var(--bg-page);
+  color: var(--text-dark);
+}
+
 /* Inputs */
 .form-group, .input-group {
   margin-bottom: 1rem;

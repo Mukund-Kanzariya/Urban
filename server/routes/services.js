@@ -1,15 +1,41 @@
 // Step 4: Service Routes
 const express = require('express');
+const mongoose = require('mongoose');
 const router = express.Router();
 const Service = require('../models/Service');
 const verifyToken = require('../middleware/auth'); // Import our JWT checker
 
 // GET /api/services - View all services (Browsing feature)
-// Anyone can view services, no token needed!
 router.get('/', async (req, res) => {
   try {
-    // Find all services and include the provider's basic details using "populate"
-    const services = await Service.find().populate('providerId', 'name email');
+    const services = await Service.aggregate([
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'providerId',
+          foreignField: '_id',
+          as: 'providerData'
+        }
+      },
+      { $unwind: '$providerData' },
+      {
+        $lookup: {
+          from: 'profiles',
+          localField: 'providerId',
+          foreignField: 'userId',
+          as: 'profileData'
+        }
+      },
+      {
+        $addFields: {
+          providerName: '$providerData.name',
+          providerEmail: '$providerData.email',
+          providerPhoto: { $arrayElemAt: ['$profileData.profilePicture', 0] }
+        }
+      },
+      { $project: { providerData: 0, profileData: 0 } }
+    ]);
+
     res.json(services);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -50,8 +76,48 @@ router.get('/provider', verifyToken, async (req, res) => {
     if (req.user.role !== 'provider') {
       return res.status(403).json({ error: 'Only providers can view their services via this route' });
     }
-    const services = await Service.find({ providerId: req.user._id });
+    
+    const services = await Service.aggregate([
+      { $match: { providerId: new mongoose.Types.ObjectId(req.user._id) } },
+      {
+        $lookup: {
+          from: 'profiles',
+          localField: 'providerId',
+          foreignField: 'userId',
+          as: 'profileData'
+        }
+      },
+      {
+        $addFields: {
+          providerPhoto: { $arrayElemAt: ['$profileData.profilePicture', 0] }
+        }
+      },
+      { $project: { profileData: 0 } }
+    ]);
+
     res.json(services);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT /api/services/:id - Update a service (Admin or owning Provider)
+router.put('/:id', verifyToken, async (req, res) => {
+  try {
+    const service = await Service.findById(req.params.id);
+    if (!service) return res.status(404).json({ error: 'Service not found' });
+
+    if (req.user.role === 'admin' || (req.user.role === 'provider' && service.providerId.toString() === req.user._id.toString())) {
+      const { title, category, price, location } = req.body;
+      const updated = await Service.findByIdAndUpdate(
+        req.params.id,
+        { title, category, price, location },
+        { new: true, runValidators: true }
+      );
+      return res.json(updated);
+    } else {
+      return res.status(403).json({ error: 'You do not have permission to update this service' });
+    }
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

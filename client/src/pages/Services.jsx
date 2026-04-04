@@ -25,16 +25,16 @@ function Services() {
 
   const handleBook = async (serviceId, providerId) => {
     const token = sessionStorage.getItem('token');
-    
+
     // Smooth redirect for unauthenticated users instead of harsh alerts!
     if (!token) {
       return navigate('/login', { state: { message: "Please log in to book a service!" } });
     }
-    
+
     try {
-      await axios.post('/api/bookings', { 
-        serviceId, 
-        providerId, 
+      await axios.post('/api/bookings', {
+        serviceId,
+        providerId,
         date: new Date().toISOString().split('T')[0],
         time: '10:00 AM'
       });
@@ -53,22 +53,22 @@ function Services() {
       </div>
 
       {error && <p className="error-message">{error}</p>}
-      
+
       <div className="services-grid">
         {services.length === 0 && !error ? <p className="loading-spinner">Loading services...</p> : (
           services.map((service) => (
             <div key={service._id} className="service-card">
-              <img 
-                src={categoryImages[service.category] || '/images/plumbing.png'} 
+              <img
+                src={categoryImages[service.category] || '/images/plumbing.png'}
                 alt={service.category}
               />
-              
+
               <div className="service-card-body">
                 <div className="service-header">
                   <h3>{service.title}</h3>
                   <span className="service-category">{service.category}</span>
                 </div>
-                
+
                 <div className="service-details">
                   <div className="service-detail-item">
                     <span>Location</span>

@@ -2,6 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const Booking = require('../models/Booking');
+const Profile = require('../models/Profile');
 const verifyToken = require('../middleware/auth');
 
 // POST /api/bookings - Book a service
@@ -47,10 +48,23 @@ router.get('/', verifyToken, async (req, res) => {
     // Populate fills in the references with actual data
     const bookings = await Booking.find(query)
       .populate('serviceId', 'title price')
-      .populate('customerId', 'name error')
+      .populate('customerId', 'name email')
       .populate('providerId', 'name');
 
-    res.json(bookings);
+    // Fetch profiles for the customers involved
+    const customerIds = bookings.map(b => b.customerId?._id);
+    const profiles = await Profile.find({ userId: { $in: customerIds } }, 'userId profilePicture');
+
+    const bookingsWithPhotos = bookings.map(b => {
+      const profile = profiles.find(p => p.userId.toString() === b.customerId?._id.toString());
+      const plainBooking = b.toObject();
+      if (plainBooking.customerId) {
+        plainBooking.customerId.profilePicture = profile ? profile.profilePicture : '';
+      }
+      return plainBooking;
+    });
+
+    res.json(bookingsWithPhotos);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

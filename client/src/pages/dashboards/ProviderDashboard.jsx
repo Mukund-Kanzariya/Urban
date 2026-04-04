@@ -14,6 +14,32 @@ function ProviderDashboard() {
     title: '', category: 'Plumbing', price: '', location: ''
   });
 
+  // ─── Update Modal State ─────────────────────────────────────────
+  const [modal, setModal] = useState(null);  // { data: service }
+  const [modalForm, setModalForm] = useState({});
+  const [saving, setSaving] = useState(false);
+
+  const openModal = (service) => {
+    setModal({ data: service });
+    setModalForm({ title: service.title, category: service.category, price: service.price, location: service.location });
+  };
+  const closeModal = () => { setModal(null); setModalForm({}); };
+
+  const handleSave = async () => {
+    if (!modal) return;
+    setSaving(true);
+    try {
+      await axios.put(`/api/services/${modal.data._id}`, modalForm);
+      fetchData();
+      closeModal();
+      alert('Service updated successfully!');
+    } catch (err) {
+      alert('Failed to update service');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   useEffect(() => {
     if (user.role !== 'provider') {
       navigate('/');
@@ -75,12 +101,57 @@ function ProviderDashboard() {
   if (loading) return <div className="loading-spinner">Loading Dashboard...</div>;
 
   // Calculate Average Rating
-  const avgRating = data.reviews.length > 0 
-    ? (data.reviews.reduce((acc, r) => acc + r.rating, 0) / data.reviews.length).toFixed(1) 
+  const avgRating = data.reviews.length > 0
+    ? (data.reviews.reduce((acc, r) => acc + r.rating, 0) / data.reviews.length).toFixed(1)
     : 'New';
 
   return (
     <div className="admin-container">
+
+      {/* ── Update Service Modal ── */}
+      {modal && (
+        <div className="modal-overlay" onClick={closeModal}>
+          <div className="modal-box" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>✏️ Update Service</h3>
+              <button className="modal-close" onClick={closeModal}>✕</button>
+            </div>
+            <div className="modal-body">
+              <div className="modal-field">
+                <label>Title</label>
+                <input type="text" value={modalForm.title || ''}
+                  onChange={(e) => setModalForm({ ...modalForm, title: e.target.value })} />
+              </div>
+              <div className="modal-field">
+                <label>Category</label>
+                <select value={modalForm.category || 'Plumbing'}
+                  onChange={(e) => setModalForm({ ...modalForm, category: e.target.value })}>
+                  <option value="Plumbing">Plumbing</option>
+                  <option value="Electrical">Electrical</option>
+                  <option value="Cleaning">Cleaning</option>
+                  <option value="Carpentry">Carpentry</option>
+                </select>
+              </div>
+              <div className="modal-field">
+                <label>Price ($)</label>
+                <input type="number" value={modalForm.price || ''}
+                  onChange={(e) => setModalForm({ ...modalForm, price: e.target.value })} />
+              </div>
+              <div className="modal-field">
+                <label>Location</label>
+                <input type="text" value={modalForm.location || ''}
+                  onChange={(e) => setModalForm({ ...modalForm, location: e.target.value })} />
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-secondary btn-sm" onClick={closeModal}>Cancel</button>
+              <button className="btn btn-primary btn-sm" onClick={handleSave} disabled={saving}>
+                {saving ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <header className="admin-header">
         <h2>Provider Workspace</h2>
         <div className="admin-tabs">
@@ -127,9 +198,18 @@ function ProviderDashboard() {
                       <h4>{b.serviceId?.title}</h4>
                       <span className={`status-badge status-${b.status.toLowerCase()}`}>{b.status}</span>
                     </div>
-                    <div className="item-details">
-                      <p><strong>Customer:</strong> {b.customerId?.name}</p>
-                      <p><strong>Scheduled:</strong> {b.date} at {b.time}</p>
+                    <div className="item-details" style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '0.5rem' }}>
+                      {b.customerId?.profilePicture ? (
+                        <img src={b.customerId.profilePicture} alt="" className="table-avatar-img" style={{ width: '40px', height: '40px' }} />
+                      ) : (
+                        <div className="table-avatar" style={{ width: '40px', height: '40px', background: '#3b82f6', fontSize: '0.9rem' }}>
+                          {(b.customerId?.name || 'C').charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                      <div>
+                        <p style={{ margin: 0 }}><strong>Customer:</strong> {b.customerId?.name}</p>
+                        <p style={{ margin: 0, fontSize: '0.85rem' }}>{b.date} at {b.time}</p>
+                      </div>
                     </div>
                     <div className="action-buttons">
                       {b.status === 'pending' && (
@@ -155,14 +235,27 @@ function ProviderDashboard() {
             <table className="data-table">
               <thead>
                 <tr>
+                  <th className="avatar-cell">Photo</th>
                   <th>Title</th><th>Category</th><th>Price</th><th>Location</th><th>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {data.services.map(s => (
                   <tr key={s._id}>
+                    <td className="avatar-cell">
+                      {s.providerPhoto ? (
+                        <img src={s.providerPhoto} alt="" className="table-avatar-img" />
+                      ) : (
+                        <div className="table-avatar" style={{ background: '#10b981' }}>
+                          {(s.providerName || 'P').charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                    </td>
                     <td>{s.title}</td><td>{s.category}</td><td>${s.price}</td><td>{s.location}</td>
-                    <td><button className="btn btn-danger btn-sm" onClick={() => deleteService(s._id)}>Delete</button></td>
+                    <td className="action-cell">
+                      <button className="btn btn-warning btn-sm" onClick={() => openModal(s)}>Update</button>
+                      <button className="btn btn-danger btn-sm" onClick={() => deleteService(s._id)}>Delete</button>
+                    </td>
                   </tr>
                 ))}
                 {data.services.length === 0 && (
