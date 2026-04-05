@@ -18,8 +18,8 @@ router.post('/', async (req, res) => {
 // GET /api/contacts - Get all messages (Admin Only)
 router.get('/', verifyToken, async (req, res) => {
   try {
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({ error: 'Access denied. Only admins can view messages.' });
+    if (req.user.role !== 'admin' && req.user.role !== 'super_admin') {
+      return res.status(403).json({ error: 'Access denied. Administrator access required.' });
     }
     const contacts = await Contact.find().sort({ createdAt: -1 }); // Newest first
     res.json(contacts);
@@ -31,7 +31,7 @@ router.get('/', verifyToken, async (req, res) => {
 // DELETE /api/contacts/:id - Delete a message (Admin Only)
 router.delete('/:id', verifyToken, async (req, res) => {
   try {
-    if (req.user.role !== 'admin') {
+    if (req.user.role !== 'admin' && req.user.role !== 'super_admin') {
       return res.status(403).json({ error: 'Access denied.' });
     }
     await Contact.findByIdAndDelete(req.params.id);

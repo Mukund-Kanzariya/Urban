@@ -3,11 +3,55 @@ const router = express.Router();
 const User = require('../models/User');
 const verifyToken = require('../middleware/auth');
 
+// GET /api/users/providers - Get all experts (Public)
+router.get('/providers', async (req, res) => {
+  try {
+    const providers = await User.aggregate([
+      { $match: { role: 'provider' } },
+      {
+        $lookup: {
+          from: 'profiles',
+          localField: '_id',
+          foreignField: 'userId',
+          as: 'profile'
+        }
+      },
+      {
+        $lookup: {
+          from: 'reviews',
+          localField: '_id',
+          foreignField: 'providerId',
+          as: 'reviews'
+        }
+      },
+      {
+        $addFields: {
+          profileData: { $arrayElemAt: ['$profile', 0] },
+          averageRating: { $avg: '$reviews.rating' },
+          reviewCount: { $size: '$reviews' }
+        }
+      },
+      {
+        $project: {
+          password: 0,
+          profile: 0,
+          reviews: 0,
+          'profileData.userId': 0
+        }
+      }
+    ]);
+
+    res.json(providers);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET /api/users - Get all users (Admin only)
 router.get('/', verifyToken, async (req, res) => {
   try {
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({ error: 'Access denied. Only admins can view users.' });
+    if (req.user.role !== 'admin' && req.user.role !== 'super_admin') {
+      return res.status(403).json({ error: 'Access denied. Administrator access required.' });
     }
     
     // We use aggregate to "join" with the Profile collection and get the profilePicture
@@ -48,8 +92,8 @@ router.get('/', verifyToken, async (req, res) => {
 // PUT /api/users/:id - Update a user (Admin only)
 router.put('/:id', verifyToken, async (req, res) => {
   try {
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({ error: 'Access denied. Only admins can update users.' });
+    if (req.user.role !== 'admin' && req.user.role !== 'super_admin') {
+      return res.status(403).json({ error: 'Access denied. Administrator access required.' });
     }
     const { name, role } = req.body;
     const updatedUser = await User.findByIdAndUpdate(
@@ -67,8 +111,8 @@ router.put('/:id', verifyToken, async (req, res) => {
 // DELETE /api/users/:id - Delete a user (Admin only)
 router.delete('/:id', verifyToken, async (req, res) => {
   try {
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({ error: 'Access denied. Only admins can delete users.' });
+    if (req.user.role !== 'admin' && req.user.role !== 'super_admin') {
+      return res.status(403).json({ error: 'Access denied. Administrator access required.' });
     }
     await User.findByIdAndDelete(req.params.id);
     res.json({ message: 'User deleted successfully' });

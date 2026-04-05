@@ -16,7 +16,7 @@ function AdminDashboard() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (user.role !== 'admin') { navigate('/'); return; }
+    if (user.role !== 'admin' && user.role !== 'super_admin') { navigate('/'); return; }
     fetchData();
   }, [navigate]);
 
@@ -131,6 +131,7 @@ function AdminDashboard() {
                       <option value="customer">Customer</option>
                       <option value="provider">Provider</option>
                       <option value="admin">Admin</option>
+                      {user.role === 'super_admin' && <option value="super_admin">Super Admin</option>}
                     </select>
                   </div>
                 </>
@@ -198,7 +199,23 @@ function AdminDashboard() {
 
       {/* ── Header & Tabs ── */}
       <header className="admin-header">
-        <h2>Admin Control Center</h2>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+          <h2 style={{ margin: 0 }}>Admin Control Center</h2>
+          {user.role === 'super_admin' && (
+            <span style={{ 
+              background: 'linear-gradient(135deg, #6366f1, #4f46e5)', 
+              color: 'white', 
+              padding: '0.4rem 1rem', 
+              borderRadius: '100px', 
+              fontSize: '0.75rem', 
+              fontWeight: '800', 
+              textTransform: 'uppercase',
+              boxShadow: '0 4px 6px rgba(99, 102, 241, 0.2)'
+            }}>
+              Super Admin Mode
+            </span>
+          )}
+        </div>
         <div className="admin-tabs">
           <button className={`tab ${activeTab === 'metrics'  ? 'active' : ''}`} onClick={() => setActiveTab('metrics')}>Overview</button>
           <button className={`tab ${activeTab === 'users'    ? 'active' : ''}`} onClick={() => setActiveTab('users')}>Users</button>

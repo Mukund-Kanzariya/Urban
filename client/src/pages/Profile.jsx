@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import '../css/Dashboards.css'; // Leverage existing dashboard styles!
+import '../css/Dashboards.css';
 
 function Profile() {
   const [profile, setProfile] = useState({
@@ -11,10 +11,15 @@ function Profile() {
     bio: '',
     serviceCategory: '',
     hourlyRate: '',
+    price_per_hour: 0,
     experienceYears: '',
     preferredContact: 'Email',
     department: '',
-    profilePicture: ''
+    availability_status: 'available',
+    is_verified: false,
+    profilePicture: '',
+    password: '',
+    confirmPassword: ''
   });
   const [baseUser, setBaseUser] = useState({ name: '', email: '', role: '' });
   const [status, setStatus] = useState({ type: '', msg: '' });
@@ -25,19 +30,16 @@ function Profile() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // If no token exists, immediately kick them out to login!
     if (!sessionStorage.getItem('token')) {
       navigate('/login');
       return;
     }
 
-    // Fetch their profile. The backend will automatically create one if it's their first time here.
     const fetchProfile = async () => {
       try {
         const response = await axios.get('/api/profiles/me');
         const data = response.data;
 
-        // Extract the base user fields populated from the User collection
         if (data.userId) {
           setBaseUser({
             id: data.userId._id,
@@ -47,7 +49,6 @@ function Profile() {
           });
         }
 
-        // Extract the mutable profile fields
         setProfile({
           phone: data.phone || '',
           address: data.address || '',
@@ -55,10 +56,15 @@ function Profile() {
           bio: data.bio || '',
           serviceCategory: data.serviceCategory || '',
           hourlyRate: data.hourlyRate || '',
+          price_per_hour: data.price_per_hour || 0,
           experienceYears: data.experienceYears || '',
           preferredContact: data.preferredContact || 'Email',
           department: data.department || '',
-          profilePicture: data.profilePicture || ''
+          availability_status: data.availability_status || 'available',
+          is_verified: data.is_verified || false,
+          profilePicture: data.profilePicture || '',
+          password: '',
+          confirmPassword: ''
         });
 
         setLoading(false);
@@ -72,20 +78,26 @@ function Profile() {
   }, [navigate]);
 
   const handleChange = (e) => {
-    setProfile({ ...profile, [e.target.name]: e.target.value });
+    const val = e.target.type === 'number' ? parseFloat(e.target.value) : e.target.value;
+    setProfile({ ...profile, [e.target.name]: val });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Safety check for matching passwords
+    if (profile.password && profile.password !== profile.confirmPassword) {
+      return setStatus({ type: 'error', msg: 'New passwords do not match!' });
+    }
+
     setStatus({ type: 'loading', msg: 'Saving changes...' });
 
     try {
-      // Build FormData for multipart request
       const formData = new FormData();
       Object.keys(profile).forEach((key) => {
+        if (key === 'password' && profile[key] === '') return; // Don't send empty password
         formData.append(key, profile[key]);
       });
-      // Append the physical file buffer if they chose one
       if (file) {
         formData.append('profilePicture', file);
       }
@@ -94,15 +106,12 @@ function Profile() {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       
-      // Update our local state with the exact URL mapped by the server
       if (res.data.profilePicture) {
         setProfile(prev => ({...prev, profilePicture: res.data.profilePicture}));
       }
 
       setStatus({ type: 'success', msg: 'Profile updated successfully!' });
       setIsEditing(false);
-
-      // Clear success message after 3 seconds
       setTimeout(() => setStatus({ type: '', msg: '' }), 3000);
     } catch (err) {
       setStatus({ type: 'error', msg: err.response?.data?.message || 'Failed to update profile.' });
@@ -115,13 +124,12 @@ function Profile() {
     <div className="dashboard-container">
       <header className="dashboard-header">
         <h2>My Profile</h2>
-        <p>Manage your account settings and personal details.</p>
+        <p>Manage your account settings and professional details.</p>
       </header>
 
       <div className="dashboard-grid center-form">
-        <section className="dashboard-card" style={{ maxWidth: '800px', margin: '0 auto', width: '100%' }}>
+        <section className="dashboard-card" style={{ maxWidth: '850px', margin: '0 auto', width: '100%' }}>
 
-          {/* Status Messages */}
           {status.msg && (
             <div style={{
               padding: '1rem', marginBottom: '1.5rem', borderRadius: '8px', textAlign: 'center',
@@ -138,249 +146,180 @@ function Profile() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
                   {profile.profilePicture ? (
                     <img 
-                      src={`http://localhost:5000${profile.profilePicture}`} 
+                      src={profile.profilePicture} 
                       alt="Profile" 
-                      style={{ width: '80px', height: '80px', borderRadius: '50%', objectFit: 'cover', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }} 
+                      style={{ width: '100px', height: '100px', borderRadius: '50%', objectFit: 'cover', border: '4px solid #fff', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} 
                     />
                   ) : (
                     <div style={{
-                      width: '80px',
-                      height: '80px',
-                      borderRadius: '50%',
-                      backgroundColor: '#0ea5e9',
-                      color: 'white',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '2rem',
-                      fontWeight: 'bold',
-                      boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                      width: '100px', height: '100px', borderRadius: '50%', backgroundColor: '#0ea5e9', color: 'white',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.5rem', fontWeight: 'bold'
                     }}>
                       {baseUser.name ? baseUser.name.charAt(0).toUpperCase() : '?'}
                     </div>
                   )}
                   <div>
-                    <h3 style={{ margin: '0 0 0.25rem 0', fontSize: '1.5rem' }}>Account Overview</h3>
-                    <p style={{ margin: 0, color: 'var(--text-muted)' }}>
-                      Joined {baseUser.id ? new Date(parseInt(baseUser.id.substring(0, 8), 16) * 1000).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 'Recently'}
-                    </p>
+                    <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.6rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      {baseUser.name}
+                      {profile.is_verified && (
+                        <span title="Verified Professional" style={{ color: '#0ea5e9', fontSize: '1.2rem' }}>
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                        </span>
+                      )}
+                    </h3>
+                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                      <span className={`role-badge role-${baseUser.role}`}>{baseUser.role}</span>
+                      {baseUser.role === 'provider' && (
+                        <span className={`status-pill status-${profile.availability_status}`} style={{ fontSize: '0.75rem', padding: '0.2rem 0.6rem', borderRadius: '100px', background: '#f1f5f9', fontWeight: '700', textTransform: 'uppercase' }}>
+                          {profile.availability_status}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
-                <button className="btn btn-primary btn-sm" onClick={() => setIsEditing(true)}>Edit Profile</button>
+                <button className="btn btn-primary" onClick={() => setIsEditing(true)}>Edit Profile</button>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '2rem' }}>
-                <div>
-                  <label style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Full Name</label>
-                  <p style={{ fontSize: '1.1rem', fontWeight: '500', color: 'var(--text-dark)', marginTop: '0.25rem' }}>{baseUser.name}</p>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '2rem' }}>
+                <div className="info-group">
+                  <label>Email Address</label>
+                  <p>{baseUser.email}</p>
                 </div>
-                <div>
-                  <label style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Email Address</label>
-                  <p style={{ fontSize: '1.1rem', fontWeight: '500', color: 'var(--text-dark)', marginTop: '0.25rem' }}>{baseUser.email}</p>
+                <div className="info-group">
+                  <label>Phone Number</label>
+                  <p>{profile.phone || 'Not provided'}</p>
                 </div>
-                <div>
-                  <label style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Account Role</label>
-                  <p style={{ fontSize: '1.1rem', fontWeight: '500', color: 'var(--text-dark)', marginTop: '0.25rem' }}>
-                    <span className={`role-badge role-${baseUser.role}`}>{baseUser.role}</span>
-                  </p>
+                <div className="info-group" style={{ gridColumn: '1 / -1' }}>
+                  <label>Complete Address</label>
+                  <p>{profile.address || 'Not provided'}</p>
                 </div>
-                <div>
-                  <label style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Phone Number</label>
-                  <p style={{ fontSize: '1.1rem', fontWeight: '500', color: profile.phone ? 'var(--text-dark)' : 'var(--text-muted)', marginTop: '0.25rem' }}>
-                    {profile.phone || 'Not provided'}
-                  </p>
+                <div className="info-group" style={{ gridColumn: '1 / -1' }}>
+                  <label>City</label>
+                  <p>{profile.city || 'Not provided'}</p>
                 </div>
-                <div style={{ gridColumn: '1 / -1' }}>
-                  <label style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Location</label>
-                  <p style={{ fontSize: '1.1rem', fontWeight: '500', color: (profile.address || profile.city) ? 'var(--text-dark)' : 'var(--text-muted)', marginTop: '0.25rem' }}>
-                    {profile.address || profile.city ? `${profile.address}${profile.address && profile.city ? ', ' : ''}${profile.city}` : 'Not provided'}
-                  </p>
-                </div>
-                <div style={{ gridColumn: '1 / -1' }}>
-                  <label style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>About Me</label>
-                  <p style={{ fontSize: '1.05rem', lineHeight: '1.6', color: profile.bio ? 'var(--text-dark)' : 'var(--text-muted)', marginTop: '0.25rem', background: '#f8fafc', padding: '1rem', borderRadius: '8px', border: '1px solid var(--border)' }}>
-                    {profile.bio || 'Tell us about yourself...'}
-                  </p>
-                </div>
-
-                {/* Role Specific Data View */}
+                
                 {baseUser.role === 'provider' && (
                   <>
-                    <h4 style={{ gridColumn: '1 / -1', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem', marginTop: '1rem' }}>Professional Details</h4>
-                    <div>
-                      <label style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Service Category</label>
-                      <p style={{ fontSize: '1.1rem', fontWeight: '500', color: profile.serviceCategory ? 'var(--text-dark)' : 'var(--text-muted)', marginTop: '0.25rem' }}>{profile.serviceCategory || 'Not provided'}</p>
+                    <h4 style={{ gridColumn: '1 / -1', marginTop: '1.5rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem' }}>Professional Capabilities</h4>
+                    <div className="info-group">
+                      <label>Category</label>
+                      <p>{profile.serviceCategory || 'Not set'}</p>
                     </div>
-                    <div>
-                      <label style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Hourly Rate</label>
-                      <p style={{ fontSize: '1.1rem', fontWeight: '500', color: profile.hourlyRate ? 'var(--text-dark)' : 'var(--text-muted)', marginTop: '0.25rem' }}>{profile.hourlyRate ? `$${profile.hourlyRate}/hr` : 'Not provided'}</p>
+                    <div className="info-group">
+                      <label>Price Per Hour</label>
+                      <p>{profile.price_per_hour ? `Rs. ${profile.price_per_hour}` : 'Not set'}</p>
                     </div>
-                    <div>
-                      <label style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Experience</label>
-                      <p style={{ fontSize: '1.1rem', fontWeight: '500', color: profile.experienceYears ? 'var(--text-dark)' : 'var(--text-muted)', marginTop: '0.25rem' }}>{profile.experienceYears ? `${profile.experienceYears} Years` : 'Not provided'}</p>
+                    <div className="info-group">
+                      <label>Experience</label>
+                      <p>{profile.experienceYears ? `${profile.experienceYears} Years` : 'Not set'}</p>
                     </div>
-                  </>
-                )}
-
-                {baseUser.role === 'customer' && (
-                  <>
-                    <h4 style={{ gridColumn: '1 / -1', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem', marginTop: '1rem' }}>Preferences</h4>
-                    <div style={{ gridColumn: '1 / -1' }}>
-                      <label style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Preferred Contact Method</label>
-                      <p style={{ fontSize: '1.1rem', fontWeight: '500', color: profile.preferredContact ? 'var(--text-dark)' : 'var(--text-muted)', marginTop: '0.25rem' }}>{profile.preferredContact || 'Email'}</p>
+                    <div className="info-group">
+                      <label>Total Rating</label>
+                      <p>{profile.rating > 0 ? `⭐ ${profile.rating} (${profile.total_reviews} reviews)` : 'No ratings yet'}</p>
                     </div>
                   </>
                 )}
-
-                {baseUser.role === 'admin' && (
-                  <>
-                    <h4 style={{ gridColumn: '1 / -1', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem', marginTop: '1rem' }}>Admin Details</h4>
-                    <div style={{ gridColumn: '1 / -1' }}>
-                      <label style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Department</label>
-                      <p style={{ fontSize: '1.1rem', fontWeight: '500', color: profile.department ? 'var(--text-dark)' : 'var(--text-muted)', marginTop: '0.25rem' }}>{profile.department || 'Not specified'}</p>
-                    </div>
-                  </>
-                )}
-
+                
+                <div className="info-group" style={{ gridColumn: '1 / -1' }}>
+                  <label>Professional Bio</label>
+                  <div style={{ background: '#f8fafc', padding: '1rem', borderRadius: '12px', border: '1px solid var(--border)', lineHeight: '1.6' }}>
+                    {profile.bio || 'Please update your bio to help customers know you better.'}
+                  </div>
+                </div>
               </div>
             </div>
           ) : (
-            <form onSubmit={handleSubmit}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '1rem', marginBottom: '1.5rem' }}>
-                <h3 style={{ margin: 0 }}>Update Profile</h3>
-                <button type="button" className="btn btn-sm" onClick={() => setIsEditing(false)}>Cancel</button>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                <div className="form-group">
-                  <label>Full Name 🔒</label>
-                  <input type="text" value={baseUser.name} disabled style={{ backgroundColor: '#f1f5f9', color: '#64748b' }} />
-                </div>
-                <div className="form-group">
-                  <label>Email Address 🔒</label>
-                  <input type="email" value={baseUser.email} disabled style={{ backgroundColor: '#f1f5f9', color: '#64748b' }} />
-                </div>
-              </div>
-
-              <div className="form-group" style={{ marginBottom: '2rem' }}>
-                <label>Account Role 🔒</label>
-                <input type="text" value={baseUser.role.toUpperCase()} disabled style={{ backgroundColor: '#f1f5f9', color: '#64748b', fontWeight: 'bold' }} />
-              </div>
-
-              <h4 style={{ marginBottom: '1rem', color: 'var(--text-dark)' }}>Public Details</h4>
-
-              <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-                <label>Profile Photo</label>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                  <input 
-                    type="file" 
-                    accept="image/*" 
-                    onChange={(e) => setFile(e.target.files[0])} 
-                    style={{ padding: '0.5rem', background: '#f8fafc', border: '1px solid var(--border)', borderRadius: '6px', width: '100%' }}
-                  />
-                  {profile.profilePicture && !file && (
-                    <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>Current photo saved</span>
-                  )}
-                </div>
+            <form onSubmit={handleSubmit} className="profile-edit-form">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+                <h3 style={{ margin: 0 }}>Edit Your Details</h3>
+                <button type="button" className="btn btn-secondary btn-sm" onClick={() => setIsEditing(false)}>Cancel</button>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div className="form-group">
                   <label>Phone Number</label>
-                  <input
-                    type="text"
-                    name="phone"
-                    value={profile.phone}
-                    onChange={handleChange}
-                    placeholder="(123) 456-7890"
-                  />
+                  <input type="text" name="phone" value={profile.phone} onChange={handleChange} placeholder="+91 99999 99999" />
                 </div>
                 <div className="form-group">
                   <label>City</label>
-                  <input
-                    type="text"
-                    name="city"
-                    value={profile.city}
-                    onChange={handleChange}
-                    placeholder="New York, NY"
+                  <input type="text" name="city" value={profile.city} onChange={handleChange} placeholder="Mumbai" />
+                </div>
+                <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                  <label>Full Address</label>
+                  <input type="text" name="address" value={profile.address} onChange={handleChange} placeholder="House No, Street Name..." />
+                </div>
+                <div className="form-group">
+                  <label>Profile Picture</label>
+                  <input type="file" accept="image/*" onChange={(e) => setFile(e.target.files[0])} />
+                </div>
+                
+                <div className="form-group">
+                  <label>Change Security Password</label>
+                  <input 
+                    type="password" 
+                    name="password" 
+                    value={profile.password} 
+                    onChange={handleChange} 
+                    placeholder="Enter new password (optional)" 
                   />
                 </div>
-              </div>
+                <div className="form-group">
+                  <label>Confirm New Password</label>
+                  <input 
+                    type="password" 
+                    name="confirmPassword" 
+                    value={profile.confirmPassword || ''} 
+                    onChange={handleChange} 
+                    placeholder="Confirm new password" 
+                  />
+                </div>
 
-              <div className="form-group">
-                <label>Full Address</label>
-                <input
-                  type="text"
-                  name="address"
-                  value={profile.address}
-                  onChange={handleChange}
-                  placeholder="123 Main St, Apt 4"
-                />
-              </div>
-
-              <div className="form-group">
-                <label>About Me (Bio)</label>
-                <textarea
-                  name="bio"
-                  value={profile.bio}
-                  onChange={handleChange}
-                  placeholder="Tell us a bit about yourself..."
-                  style={{ minHeight: '120px', resize: 'vertical' }}
-                ></textarea>
-              </div>
-
-              {/* Role Specific Data Edit */}
-              {baseUser.role === 'provider' && (
-                <>
-                  <h4 style={{ marginTop: '2rem', marginBottom: '1rem', color: 'var(--text-dark)' }}>Professional Details</h4>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                  <label>Professional Bio</label>
+                  <textarea name="bio" value={profile.bio} onChange={handleChange} placeholder="Tell us about yourself..." style={{ minHeight: '100px' }}></textarea>
+                </div>
+                
+                {baseUser.role === 'provider' && (
+                  <>
+                    <h4 style={{ gridColumn: '1 / -1', marginTop: '1rem' }}>Expert Settings</h4>
+                    <div className="form-group">
+                      <label>Availability Status</label>
+                      <select name="availability_status" value={profile.availability_status} onChange={handleChange}>
+                        <option value="available">Available Now</option>
+                        <option value="busy">Busy (In Progress)</option>
+                        <option value="offline">Currently Offline</option>
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label>Price Per Hour (Rs.)</label>
+                      <input type="number" name="price_per_hour" value={profile.price_per_hour} onChange={handleChange} />
+                    </div>
+                    <div className="form-group">
+                      <label>Experience (Years)</label>
+                      <input type="text" name="experienceYears" value={profile.experienceYears} onChange={handleChange} />
+                    </div>
                     <div className="form-group">
                       <label>Service Category</label>
-                      <input type="text" name="serviceCategory" value={profile.serviceCategory} onChange={handleChange} placeholder="e.g. Plumbing, Cleaning" />
+                      <input type="text" name="serviceCategory" value={profile.serviceCategory} onChange={handleChange} />
                     </div>
-                    <div className="form-group">
-                      <label>Hourly Rate ($)</label>
-                      <input type="number" name="hourlyRate" value={profile.hourlyRate} onChange={handleChange} placeholder="e.g. 50" />
-                    </div>
-                  </div>
-                  <div className="form-group">
-                    <label>Years of Experience</label>
-                    <input type="number" name="experienceYears" value={profile.experienceYears} onChange={handleChange} placeholder="e.g. 5" />
-                  </div>
-                </>
-              )}
+                  </>
+                )}
+              </div>
 
-              {baseUser.role === 'customer' && (
-                <>
-                  <h4 style={{ marginTop: '2rem', marginBottom: '1rem', color: 'var(--text-dark)' }}>Preferences</h4>
-                  <div className="form-group">
-                    <label>Preferred Contact Method</label>
-                    <select name="preferredContact" value={profile.preferredContact} onChange={handleChange} style={{ width: '100%', padding: '0.875rem' }}>
-                      <option value="Email">Email</option>
-                      <option value="Phone">Phone</option>
-                      <option value="SMS">SMS / Text Message</option>
-                    </select>
-                  </div>
-                </>
-              )}
-
-              {baseUser.role === 'admin' && (
-                <>
-                  <h4 style={{ marginTop: '2rem', marginBottom: '1rem', color: 'var(--text-dark)' }}>Admin Details</h4>
-                  <div className="form-group">
-                    <label>Department</label>
-                    <input type="text" name="department" value={profile.department} onChange={handleChange} placeholder="e.g. Platform Security" />
-                  </div>
-                </>
-              )}
-
-              <button type="submit" className="btn btn-primary w-100" style={{ marginTop: '1rem', padding: '0.8rem' }} disabled={status.type === 'loading'}>
-                {status.type === 'loading' ? 'Saving...' : 'Save Profile Changes'}
+              <button type="submit" className="btn btn-primary w-100" style={{ marginTop: '2rem', padding: '0.85rem' }} disabled={status.type === 'loading'}>
+                {status.type === 'loading' ? 'Processing...' : 'Securely Save All Changes'}
               </button>
             </form>
           )}
         </section>
       </div>
+      <style>{`
+        .info-group label { color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700; margin-bottom: 0.25rem; display: block; }
+        .info-group p { font-size: 1.1rem; color: var(--text-dark); font-weight: 500; margin: 0; }
+        .status-available { color: #10b981; }
+        .status-busy { color: #f59e0b; }
+        .status-offline { color: #6b7280; }
+      `}</style>
     </div>
   );
 }

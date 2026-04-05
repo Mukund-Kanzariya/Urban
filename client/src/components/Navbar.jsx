@@ -32,7 +32,7 @@ function Navbar() {
             setProfilePic(res.data.profilePicture);
           }
         })
-        .catch(() => {});
+        .catch(() => { });
     }
   }, [token]);
 
@@ -51,7 +51,8 @@ function Navbar() {
   };
 
   const roleColors = {
-    admin:    '#4f46e5',
+    admin: '#4f46e5',
+    super_admin: '#6366f1', // Rich Indigo for Super Admin
     provider: '#10b981',
     customer: '#3b82f6',
   };
@@ -74,11 +75,11 @@ function Navbar() {
       <h2 className="brand-logo">
         <Link to="/">
           <svg className="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-            <path d="M22 10V6a2 2 0 0 0-2-2h-4"/>
-            <path d="M2 14v4a2 2 0 0 0 2 2h4"/>
-            <rect x="9" y="11" width="6" height="6" rx="1"/>
-            <path d="M12 17v4"/>
+            <path d="M12 2L2 7l10 5 10-5-10-5z" />
+            <path d="M22 10V6a2 2 0 0 0-2-2h-4" />
+            <path d="M2 14v4a2 2 0 0 0 2 2h4" />
+            <rect x="9" y="11" width="6" height="6" rx="1" />
+            <path d="M12 17v4" />
           </svg>
           Service<span style={{ color: 'var(--primary)' }}>Hub</span>
         </Link>
@@ -87,6 +88,7 @@ function Navbar() {
       <div className="nav-links">
         <Link to="/" className="nav-link">Home</Link>
         <Link to="/services" className="nav-link">Services</Link>
+        <Link to="/experts" className="nav-link">Providers</Link>
         <Link to="/about" className="nav-link">About Us</Link>
         <Link to="/contact" className="nav-link">Contact Us</Link>
 
@@ -114,8 +116,8 @@ function Navbar() {
                     {renderAvatar('lg')}
                     <div className="nav-dropdown-info">
                       <span className="nav-dropdown-name">{user.name}</span>
-                      <span className={`nav-dropdown-role role-pill role-${user.role}`}>
-                        {user.role}
+                      <span className={`nav-dropdown-role role-pill role-${user.role.replace('_', '-')}`}>
+                        {user.role.replace('_', ' ')}
                       </span>
                     </div>
                   </div>
@@ -124,7 +126,7 @@ function Navbar() {
 
                   <Link to="/profile" className="nav-dropdown-item" onClick={() => setDropdownOpen(false)}>
                     <svg className="dropdown-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
                     </svg>
                     My Profile
                   </Link>
@@ -133,7 +135,7 @@ function Navbar() {
 
                   <button className="nav-dropdown-item nav-dropdown-logout" onClick={handleLogout}>
                     <svg className="dropdown-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+                      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" />
                     </svg>
                     Logout
                   </button>

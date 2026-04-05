@@ -78,7 +78,7 @@ router.get('/', async (req, res) => {
 // @access  Private/Admin
 router.get('/all', verifyToken, async (req, res) => {
     try {
-        if (req.user.role !== 'admin') {
+        if (req.user.role !== 'admin' && req.user.role !== 'super_admin') {
             return res.status(403).json({ message: 'Only admins can fetch all reviews' });
         }
 
@@ -119,7 +119,7 @@ router.get('/all', verifyToken, async (req, res) => {
 // @access  Private/Admin
 router.put('/:id', verifyToken, async (req, res) => {
     try {
-        if (req.user.role !== 'admin') {
+        if (req.user.role !== 'admin' && req.user.role !== 'super_admin') {
             return res.status(403).json({ message: 'Only admins can update reviews' });
         }
         const { rating, comment } = req.body;
@@ -140,7 +140,7 @@ router.put('/:id', verifyToken, async (req, res) => {
 // @access  Private/Admin
 router.delete('/:id', verifyToken, async (req, res) => {
     try {
-        if (req.user.role !== 'admin') {
+        if (req.user.role !== 'admin' && req.user.role !== 'super_admin') {
             return res.status(403).json({ message: 'Only admins can delete reviews' });
         }
 

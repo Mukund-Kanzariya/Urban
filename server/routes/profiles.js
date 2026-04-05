@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Profile = require('../models/Profile');
+const User = require('../models/User'); // Essential for populate to work reliably
 const verifyToken = require('../middleware/auth'); // Standard auth protection
 const multer = require('multer');
 const path = require('path');
@@ -46,19 +47,18 @@ router.get('/me', verifyToken, async (req, res) => {
         let profile = await Profile.findOne({ userId: req.user._id })
             .populate('userId', 'name email role'); // Pull foundational data from User table
         
-        // If they don't have a profile object yet, we automatically create a blank one for them
+        // Re-fetch to populate the user data natively
         if (!profile) {
             profile = new Profile({ userId: req.user._id });
             await profile.save();
-            // Re-fetch to populate the user data natively
             profile = await Profile.findOne({ userId: req.user._id })
                 .populate('userId', 'name email role');
         }
 
         res.json(profile);
     } catch (error) {
-        console.error("Profile Fetch Error:", error.message);
-        res.status(500).json({ message: 'Server Error fetching profile' });
+        console.error("Profile Fetch Error stack:", error.stack);
+        res.status(500).json({ message: 'Server Error fetching profile: ' + error.message });
     }
 });
 
@@ -70,15 +70,15 @@ router.put('/me', verifyToken, upload.single('profilePicture'), async (req, res)
         // Collect all possible fields
         const { 
           phone, address, city, bio,
-          serviceCategory, hourlyRate, experienceYears,
-          preferredContact, department
+          serviceCategory, hourlyRate, price_per_hour, experienceYears,
+          preferredContact, department, availability_status, password
         } = req.body;
         
         // Build the update payload dynamically
         const updatePayload = {
             phone, address, city, bio,
-            serviceCategory, hourlyRate, experienceYears,
-            preferredContact, department
+            serviceCategory, hourlyRate, price_per_hour, experienceYears,
+            preferredContact, department, availability_status
         };
 
         // If a file was uploaded by multer, embed the new URL path into the payload!
@@ -97,6 +97,22 @@ router.put('/me', verifyToken, upload.single('profilePicture'), async (req, res)
                 upsert: true // Creates it if it doesn't exist
             }
         ).populate('userId', 'name email role');
+
+        // Sync Phone and Profile Image with User model as well
+        const userUpdate = {};
+        if (phone) userUpdate.phone = phone;
+        if (updatedProfile.profilePicture) userUpdate.profile_image = updatedProfile.profilePicture;
+        
+        // Handle Easy Password Update directly from profile
+        if (password && password.trim() !== '') {
+            const bcrypt = require('bcrypt');
+            const salt = await bcrypt.genSalt(10);
+            userUpdate.password = await bcrypt.hash(password, salt);
+        }
+
+        if (Object.keys(userUpdate).length > 0) {
+            await User.findByIdAndUpdate(req.user._id, userUpdate);
+        }
 
         res.json(updatedProfile);
     } catch (error) {

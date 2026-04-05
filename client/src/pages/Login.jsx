@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import '../css/Auth.css';
 function Login() {
   // We use state to store exactly what the user is typing into the inputs
@@ -67,7 +67,17 @@ function Login() {
             />
           </div>
           
-          <button type="submit" className="btn btn-primary auth-submit">Login</button>
+          <button type="submit" className="btn btn-primary auth-submit" style={{ marginBottom: '1.5rem' }}>Login</button>
+          
+          <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+            <Link to="/forgot-password" style={{ color: 'var(--primary)', textDecoration: 'none', fontSize: '0.9rem', fontWeight: '600' }}>
+              Forgot Password?
+            </Link>
+          </div>
+          
+          <div style={{ textAlign: 'center', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+            Don't have an account? <Link to="/register" style={{ color: 'var(--primary)', fontWeight: '600', textDecoration: 'none' }}>Register here</Link>
+          </div>
         </form>
       </div>
     </div>
