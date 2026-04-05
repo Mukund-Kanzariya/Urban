@@ -105,7 +105,7 @@ router.put('/me', verifyToken, upload.single('profilePicture'), async (req, res)
         
         // Handle Easy Password Update directly from profile
         if (password && password.trim() !== '') {
-            const bcrypt = require('bcrypt');
+            const bcrypt = require('bcryptjs');
             const salt = await bcrypt.genSalt(10);
             userUpdate.password = await bcrypt.hash(password, salt);
         }
