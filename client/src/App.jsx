@@ -9,7 +9,7 @@ import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
-import CustomerDashboard from './pages/dashboards/CustomerDashboard';
+import MyBookings from './pages/MyBookings';
 import ProviderDashboard from './pages/dashboards/ProviderDashboard';
 import AdminDashboard from './pages/dashboards/AdminDashboard';
 import About from './pages/About';
@@ -56,7 +56,7 @@ function App() {
         <Route path="/add-review/:bookingId" element={<div className="container"><AddReview /></div>} />
 
         {/* Dashboard Routes - wrapped in container */}
-        <Route path="/dashboard/customer" element={<div className="container"><CustomerDashboard /></div>} />
+        <Route path="/bookings" element={<div className="container"><MyBookings /></div>} />
         <Route path="/dashboard/provider" element={<div className="container"><ProviderDashboard /></div>} />
         <Route path="/dashboard/admin" element={<div className="container"><AdminDashboard /></div>} />
         <Route path="/dashboard/super_admin" element={<div className="container"><AdminDashboard /></div>} />

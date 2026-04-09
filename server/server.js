@@ -24,6 +24,7 @@ const serviceRoutes = require('./routes/services');
 const bookingRoutes = require('./routes/bookings');
 const userRoutes = require('./routes/users');
 const contactRoutes = require('./routes/contacts');
+const categoryRoutes = require('./routes/categories');
 
 // --- Mount Routes ---
 // This tells Express to send any request starting with "/api/..." to the correct file
@@ -32,6 +33,7 @@ app.use('/api/services', serviceRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/contacts', contactRoutes);
+app.use('/api/categories', categoryRoutes);
 app.use('/api/profiles', require('./routes/profiles'));
 app.use('/api/reviews', require('./routes/reviews'));
 

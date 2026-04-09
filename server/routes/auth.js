@@ -9,7 +9,12 @@ const User = require('../models/User');
 router.post('/register', async (req, res) => {
   try {
     // Extract info from what the user typed in the form
-    const { name, email, password, role } = req.body;
+    let { name, email, password, role } = req.body;
+
+    // Prevent direct registration as administrative roles
+    if (role === 'admin' || role === 'super_admin') {
+      return res.status(403).json({ error: 'Registration of admin roles is restricted.' });
+    }
 
     // 1. Check if user already exists
     const existingUser = await User.findOne({ email });

@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import '../../css/Dashboards.css';
 
 function AdminDashboard() {
-  const [data, setData] = useState({ users: [], services: [], bookings: [], contacts: [], reviews: [] });
+  const [data, setData] = useState({ users: [], services: [], bookings: [], contacts: [], reviews: [], categories: [] });
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('metrics');
   const user = JSON.parse(sessionStorage.getItem('user')) || {};
@@ -22,23 +22,36 @@ function AdminDashboard() {
 
   const fetchData = async () => {
     try {
-      const [usersRes, servicesRes, bookingsRes, contactsRes, reviewsRes] = await Promise.all([
-        axios.get('/api/users'),
-        axios.get('/api/services'),
-        axios.get('/api/bookings'),
-        axios.get('/api/contacts'),
-        axios.get('/api/reviews/all')
+      setLoading(true);
+      console.log('Fetching all dashboard data...');
+      
+      const results = await Promise.allSettled([
+        axios.get('/api/users'),       // 0
+        axios.get('/api/services'),    // 1
+        axios.get('/api/bookings'),    // 2
+        axios.get('/api/contacts'),    // 3
+        axios.get('/api/reviews/all'), // 4
+        axios.get('/api/categories')   // 5
       ]);
-      setData({
-        users: usersRes.data,
-        services: servicesRes.data,
-        bookings: bookingsRes.data,
-        contacts: contactsRes.data,
-        reviews: reviewsRes.data
-      });
+
+      const newData = {
+        users: results[0].status === 'fulfilled' ? results[0].value.data : [],
+        services: results[1].status === 'fulfilled' ? results[1].value.data : [],
+        bookings: results[2].status === 'fulfilled' ? results[2].value.data : [],
+        contacts: results[3].status === 'fulfilled' ? results[3].value.data : [],
+        reviews: results[4].status === 'fulfilled' ? results[4].value.data : [],
+        categories: results[5].status === 'fulfilled' ? results[5].value.data : []
+      };
+
+      // Check if critical data failed
+      if (results[0].status === 'rejected') {
+        console.error('CRITICAL: Failed to load users', results[0].reason);
+      }
+
+      setData(newData);
       setLoading(false);
     } catch (err) {
-      console.error('Error fetching admin data');
+      console.error('Fatal error in Admin Dashboard fetchData:', err);
       setLoading(false);
     }
   };
@@ -46,22 +59,29 @@ function AdminDashboard() {
   // ─── Open / Close Modal ─────────────────────────────────────────
   const openModal = (type, item) => {
     setModal({ type, data: item });
+    if (type === 'addUser') setModalForm({ name: '', email: '', password: '', role: 'customer' });
     if (type === 'user')    setModalForm({ name: item.name, role: item.role });
     if (type === 'service') setModalForm({ title: item.title, category: item.category, price: item.price, location: item.location });
     if (type === 'review')  setModalForm({ rating: item.rating, comment: item.comment });
+    if (type === 'category') setModalForm({ name: item.name || '', description: item.description || '' });
   };
 
   const closeModal = () => { setModal(null); setModalForm({}); };
 
-  // ─── Save (PUT) ──────────────────────────────────────────────────
+  // ─── Save (PUT / POST) ──────────────────────────────────────────────────
   const handleSave = async () => {
     if (!modal) return;
     setSaving(true);
     try {
       const { type, data: item } = modal;
+      if (type === 'addUser') await axios.post('/api/users', modalForm);
       if (type === 'user')    await axios.put(`/api/users/${item._id}`, modalForm);
       if (type === 'service') await axios.put(`/api/services/${item._id}`, modalForm);
       if (type === 'review')  await axios.put(`/api/reviews/${item._id}`, modalForm);
+      if (type === 'category') {
+        if (item?._id) await axios.put(`/api/categories/${item._id}`, modalForm);
+        else await axios.post('/api/categories', modalForm);
+      }
       fetchData();
       closeModal();
     } catch (err) {
@@ -96,6 +116,12 @@ function AdminDashboard() {
       catch { alert('Failed to delete review'); }
     }
   };
+  const deleteCategory = async (id) => {
+    if (window.confirm('Delete this category? Services using this category may be affected.')) {
+      try { await axios.delete(`/api/categories/${id}`); fetchData(); }
+      catch { alert('Failed to delete category'); }
+    }
+  };
 
   if (loading) return <div className="loading-spinner">Loading Admin Panel...</div>;
 
@@ -108,14 +134,47 @@ function AdminDashboard() {
           <div className="modal-box" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>
+                {modal.type === 'addUser' && '➕ Add User'}
                 {modal.type === 'user'    && '✏️ Update User'}
                 {modal.type === 'service' && '✏️ Update Service'}
                 {modal.type === 'review'  && '✏️ Update Review'}
+                {modal.type === 'category' && (modal.data?._id ? '✏️ Update Category' : '➕ Add New Category')}
               </h3>
               <button className="modal-close" onClick={closeModal}>✕</button>
             </div>
 
             <div className="modal-body">
+              {/* ADD USER FORM */}
+              {modal.type === 'addUser' && (
+                <>
+                  <div className="modal-field">
+                    <label>Name</label>
+                    <input type="text" value={modalForm.name || ''}
+                      onChange={(e) => setModalForm({ ...modalForm, name: e.target.value })} />
+                  </div>
+                  <div className="modal-field">
+                    <label>Email</label>
+                    <input type="email" value={modalForm.email || ''}
+                      onChange={(e) => setModalForm({ ...modalForm, email: e.target.value })} />
+                  </div>
+                  <div className="modal-field">
+                    <label>Password</label>
+                    <input type="password" value={modalForm.password || ''}
+                      onChange={(e) => setModalForm({ ...modalForm, password: e.target.value })} />
+                  </div>
+                  <div className="modal-field">
+                    <label>Role</label>
+                    <select value={modalForm.role || 'customer'}
+                      onChange={(e) => setModalForm({ ...modalForm, role: e.target.value })}>
+                      <option value="customer">Customer</option>
+                      <option value="provider">Provider</option>
+                      <option value="admin">Admin</option>
+                      {user.role === 'super_admin' && <option value="super_admin">Super Admin</option>}
+                    </select>
+                  </div>
+                </>
+              )}
+
               {/* USER FORM */}
               {modal.type === 'user' && (
                 <>
@@ -147,12 +206,12 @@ function AdminDashboard() {
                   </div>
                   <div className="modal-field">
                     <label>Category</label>
-                    <select value={modalForm.category || 'Plumbing'}
+                    <select value={modalForm.category || ''}
                       onChange={(e) => setModalForm({ ...modalForm, category: e.target.value })}>
-                      <option value="Plumbing">Plumbing</option>
-                      <option value="Electrical">Electrical</option>
-                      <option value="Cleaning">Cleaning</option>
-                      <option value="Carpentry">Carpentry</option>
+                      <option value="">Select Category</option>
+                      {data.categories.map(c => (
+                        <option key={c._id} value={c.name}>{c.name}</option>
+                      ))}
                     </select>
                   </div>
                   <div className="modal-field">
@@ -182,6 +241,22 @@ function AdminDashboard() {
                     <label>Comment</label>
                     <textarea rows={4} value={modalForm.comment || ''}
                       onChange={(e) => setModalForm({ ...modalForm, comment: e.target.value })} />
+                  </div>
+                </>
+              )}
+
+              {/* CATEGORY FORM */}
+              {modal.type === 'category' && (
+                <>
+                  <div className="modal-field">
+                    <label>Category Name</label>
+                    <input type="text" placeholder="e.g. Plumbing" value={modalForm.name || ''}
+                      onChange={(e) => setModalForm({ ...modalForm, name: e.target.value })} />
+                  </div>
+                  <div className="modal-field">
+                    <label>Description</label>
+                    <textarea rows={3} placeholder="Brief description..." value={modalForm.description || ''}
+                      onChange={(e) => setModalForm({ ...modalForm, description: e.target.value })} />
                   </div>
                 </>
               )}
@@ -221,6 +296,7 @@ function AdminDashboard() {
           <button className={`tab ${activeTab === 'users'    ? 'active' : ''}`} onClick={() => setActiveTab('users')}>Users</button>
           <button className={`tab ${activeTab === 'services' ? 'active' : ''}`} onClick={() => setActiveTab('services')}>Services</button>
           <button className={`tab ${activeTab === 'bookings' ? 'active' : ''}`} onClick={() => setActiveTab('bookings')}>Bookings</button>
+          <button className={`tab ${activeTab === 'categories' ? 'active' : ''}`} onClick={() => setActiveTab('categories')}>Categories</button>
           <button className={`tab ${activeTab === 'contacts' ? 'active' : ''}`} onClick={() => setActiveTab('contacts')}>Messages</button>
           <button className={`tab ${activeTab === 'reviews'  ? 'active' : ''}`} onClick={() => setActiveTab('reviews')}>Reviews</button>
         </div>
@@ -233,6 +309,7 @@ function AdminDashboard() {
           <div className="metrics-grid">
             <div className="metric-card"><h3>Total Users</h3><p className="metric-number">{data.users.length}</p></div>
             <div className="metric-card"><h3>Total Services</h3><p className="metric-number">{data.services.length}</p></div>
+            <div className="metric-card"><h3>Total Categories</h3><p className="metric-number">{data.categories.length}</p></div>
             <div className="metric-card"><h3>Total Bookings</h3><p className="metric-number">{data.bookings.length}</p></div>
             <div className="metric-card"><h3>Total Reviews</h3><p className="metric-number">{data.reviews.length}</p></div>
           </div>
@@ -241,6 +318,11 @@ function AdminDashboard() {
         {/* ── Users Table ── */}
         {activeTab === 'users' && (
           <div className="data-table-container">
+            {user.role === 'super_admin' && (
+              <div style={{ padding: '1rem', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end' }}>
+                <button className="btn btn-primary btn-sm" onClick={() => openModal('addUser', null)}>➕ Add User</button>
+              </div>
+            )}
             <table className="data-table">
                 <thead>
                   <tr>
@@ -248,7 +330,7 @@ function AdminDashboard() {
                     <th>Name</th>
                     <th>Email</th>
                     <th>Role</th>
-                    <th style={{ textAlign: 'right' }}>Actions</th>
+                    {user.role === 'super_admin' && <th style={{ textAlign: 'right' }}>Actions</th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -266,12 +348,17 @@ function AdminDashboard() {
                       <td style={{ fontWeight: '500' }}>{u.name}</td>
                       <td>{u.email}</td>
                       <td><span className={`role-badge role-${u.role}`}>{u.role}</span></td>
-                      <td className="action-cell">
-                        <button className="btn btn-warning btn-sm" onClick={() => openModal('user', u)}>Update</button>
-                        <button className="btn btn-danger btn-sm"  onClick={() => deleteUser(u._id)}>Delete</button>
-                      </td>
+                      {user.role === 'super_admin' && (
+                        <td className="action-cell" style={{ justifyContent: 'flex-end' }}>
+                          <button className="btn btn-warning btn-sm" onClick={() => openModal('user', u)}>Update</button>
+                          <button className="btn btn-danger btn-sm"  onClick={() => deleteUser(u._id)}>Delete</button>
+                        </td>
+                      )}
                     </tr>
                   ))}
+                  {data.users.length === 0 && (
+                    <tr><td colSpan={user.role === 'super_admin' ? "5" : "4"} className="empty-state" style={{ textAlign: 'center', padding: '2rem' }}>No users found or error fetching users.</td></tr>
+                  )}
                 </tbody>
             </table>
           </div>
@@ -314,6 +401,9 @@ function AdminDashboard() {
                       </td>
                     </tr>
                   ))}
+                  {data.services.length === 0 && (
+                    <tr><td colSpan="5" className="empty-state" style={{ textAlign: 'center', padding: '2rem' }}>No services found or error fetching services.</td></tr>
+                  )}
                 </tbody>
             </table>
           </div>
@@ -353,6 +443,9 @@ function AdminDashboard() {
                     <td><span className={`status-badge status-${b.status.toLowerCase()}`}>{b.status}</span></td>
                   </tr>
                 ))}
+                {data.bookings.length === 0 && (
+                  <tr><td colSpan="5" className="empty-state" style={{ textAlign: 'center', padding: '2rem' }}>No bookings found.</td></tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -418,7 +511,6 @@ function AdminDashboard() {
                       <td style={{ color: '#fbbf24', fontSize: '1.1rem' }}>{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</td>
                       <td style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.comment}</td>
                       <td className="action-cell">
-                        <button className="btn btn-warning btn-sm" onClick={() => openModal('review', r)}>Update</button>
                         <button className="btn btn-danger btn-sm"  onClick={() => deleteReview(r._id)}>Delete</button>
                       </td>
                     </tr>
@@ -427,6 +519,41 @@ function AdminDashboard() {
                     <tr><td colSpan="7" className="empty-state">No reviews have been written yet.</td></tr>
                   )}
                 </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* ── Categories Table ── */}
+        {activeTab === 'categories' && (
+          <div className="data-table-container">
+            <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '1rem' }}>
+              <button className="btn btn-primary" onClick={() => openModal('category', {})}>
+                ➕ Add New Category
+              </button>
+            </div>
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Category Name</th>
+                  <th>Description</th>
+                  <th style={{ textAlign: 'right' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.categories.map(c => (
+                  <tr key={c._id}>
+                    <td style={{ fontWeight: '700' }}>{c.name}</td>
+                    <td style={{ color: '#666' }}>{c.description || 'No description'}</td>
+                    <td className="action-cell">
+                      <button className="btn btn-warning btn-sm" onClick={() => openModal('category', c)}>Update</button>
+                      <button className="btn btn-danger btn-sm" onClick={() => deleteCategory(c._id)}>Delete</button>
+                    </td>
+                  </tr>
+                ))}
+                {data.categories.length === 0 && (
+                  <tr><td colSpan="3" className="empty-state">No categories found. Add your first one!</td></tr>
+                )}
+              </tbody>
             </table>
           </div>
         )}

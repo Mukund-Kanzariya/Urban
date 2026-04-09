@@ -87,7 +87,44 @@
 /* ── Avatar Button ── */
 .nav-avatar-wrapper {
   position: relative;
-  margin-left: 1rem;
+}
+
+.nav-profile-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 4px 8px;
+  border-radius: 12px;
+  transition: background 0.2s ease;
+  cursor: pointer;
+  margin-left: 0.5rem;
+}
+
+.nav-profile-wrapper:hover {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.nav-user-details {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  line-height: 1.2;
+}
+
+.nav-user-name {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-dark);
+  white-space: nowrap;
+}
+
+.nav-user-role {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--primary);
+  letter-spacing: 0.4px;
+  opacity: 0.8;
 }
 
 .nav-avatar-btn {

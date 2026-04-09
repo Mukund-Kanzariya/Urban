@@ -100,7 +100,7 @@ router.get('/all', verifyToken, async (req, res) => {
         const profiles = await Profile.find({ userId: { $in: customerIds } }, 'userId profilePicture');
         
         const reviewsWithPhotos = reviews.map(r => {
-            const profile = profiles.find(p => p.userId.toString() === r.customerId?._id.toString());
+            const profile = profiles.find(p => p.userId.toString() === r.customerId?._id?.toString());
             const plainReview = r.toObject();
             if (plainReview.customerId) {
                 plainReview.customerId.profilePicture = profile ? profile.profilePicture : '';

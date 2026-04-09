@@ -14,11 +14,18 @@ const categoryImages = {
 
 function Home() {
   const [reviews, setReviews] = useState([]);
+  const [categories, setCategories] = useState([]);
 
   useEffect(() => {
+    // Fetch reviews
     axios.get('/api/reviews')
       .then((res) => setReviews(res.data))
       .catch((err) => console.log('Could not load reviews'));
+    
+    // Fetch categories
+    axios.get('/api/categories')
+      .then((res) => setCategories(res.data))
+      .catch((err) => console.log('Could not load categories'));
   }, []);
 
   return (
@@ -67,30 +74,36 @@ function Home() {
       <div className="container" style={{ padding: '2.5rem 1rem' }}>
         <h2 style={{ textAlign: 'center', marginBottom: '0.4rem', fontSize: '1.35rem' }}>Our Services</h2>
         <p style={{ textAlign: 'center', color: 'var(--text-muted)', marginBottom: '1.5rem', fontSize: '0.9rem' }}>Professional help for every need around your home</p>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem' }}>
-          {Object.entries(categoryImages).map(([name, img]) => (
-            <Link to="/services" key={name} style={{ textDecoration: 'none', color: 'inherit' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1.5rem' }}>
+          {categories.map((cat) => (
+            <Link to="/services" key={cat._id} style={{ textDecoration: 'none', color: 'inherit' }}>
               <div style={{ 
                 background: '#fff', 
                 border: '1px solid var(--border)', 
-                borderRadius: '8px', 
+                borderRadius: '12px', 
                 overflow: 'hidden',
-                transition: 'all 0.15s ease'
+                transition: 'all 0.2s ease',
+                height: '100%'
               }}
-              onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.08)'; e.currentTarget.style.borderColor = '#ccc'; }}
-              onMouseLeave={e => { e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.borderColor = 'var(--border)'; }}
+              className="category-card-home"
               >
                 <img 
-                  src={img} 
-                  alt={name} 
+                  src={categoryImages[cat.name] || '/images/plumbing.png'} 
+                  alt={cat.name} 
                   style={{ width: '100%', height: '160px', objectFit: 'cover', display: 'block' }}
                 />
-                <div style={{ padding: '0.6rem', textAlign: 'center' }}>
-                  <h3 style={{ fontSize: '0.9rem', margin: 0, fontWeight: '600' }}>{name}</h3>
+                <div style={{ padding: '1rem', textAlign: 'center' }}>
+                  <h3 style={{ fontSize: '1rem', margin: '0 0 0.4rem 0', fontWeight: '700' }}>{cat.name}</h3>
+                  <p style={{ fontSize: '0.8rem', color: '#666', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {cat.description || 'Professional home services'}
+                  </p>
                 </div>
               </div>
             </Link>
           ))}
+          {categories.length === 0 && (
+            <p style={{ gridColumn: '1 / -1', textAlign: 'center', color: '#666' }}>Loading categories...</p>
+          )}
         </div>
       </div>
 

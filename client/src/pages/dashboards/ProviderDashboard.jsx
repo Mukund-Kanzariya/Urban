@@ -4,14 +4,15 @@ import { useNavigate } from 'react-router-dom';
 import '../../css/Dashboards.css';
 
 function ProviderDashboard() {
-  const [data, setData] = useState({ bookings: [], services: [], reviews: [] });
+  const [data, setData] = useState({ bookings: [], services: [], reviews: [], categories: [] });
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('metrics'); // metrics, requests, services, add-service, reviews
+  const [availability, setAvailability] = useState('available');
   const user = JSON.parse(sessionStorage.getItem('user')) || {};
   const navigate = useNavigate();
 
   const [newService, setNewService] = useState({
-    title: '', category: 'Plumbing', price: '', location: ''
+    title: '', category: '', price: '', location: ''
   });
 
   // ─── Update Modal State ─────────────────────────────────────────
@@ -50,20 +51,34 @@ function ProviderDashboard() {
 
   const fetchData = async () => {
     try {
-      const [bookingsRes, servicesRes, reviewsRes] = await Promise.all([
+      const [bookingsRes, servicesRes, reviewsRes, categoriesRes, profileRes] = await Promise.all([
         axios.get('/api/bookings'),
         axios.get('/api/services/provider'),
-        axios.get('/api/reviews/provider')
+        axios.get('/api/reviews/provider'),
+        axios.get('/api/categories'),
+        axios.get('/api/profiles/me')
       ]);
       setData({
         bookings: bookingsRes.data,
         services: servicesRes.data,
-        reviews: reviewsRes.data
+        reviews: reviewsRes.data,
+        categories: categoriesRes.data
       });
+      setAvailability(profileRes.data.availability_status || 'available');
       setLoading(false);
     } catch (err) {
       console.error('Error fetching dashboard data');
       setLoading(false);
+    }
+  };
+
+  const toggleAvailability = async () => {
+    const newStatus = availability === 'available' ? 'offline' : 'available';
+    try {
+      await axios.put('/api/profiles/me', { availability_status: newStatus });
+      setAvailability(newStatus);
+    } catch (err) {
+      alert('Failed to update availability status');
     }
   };
 
@@ -80,7 +95,7 @@ function ProviderDashboard() {
     e.preventDefault();
     try {
       await axios.post('/api/services', newService);
-      setNewService({ title: '', category: 'Plumbing', price: '', location: '' });
+      setNewService({ title: '', category: '', price: '', location: '' });
       fetchData(); // Refresh services automatically
       alert('Service added successfully!');
       setActiveTab('services'); // Auto-switch back to services list
@@ -124,12 +139,12 @@ function ProviderDashboard() {
               </div>
               <div className="modal-field">
                 <label>Category</label>
-                <select value={modalForm.category || 'Plumbing'}
+                <select value={modalForm.category || ''}
                   onChange={(e) => setModalForm({ ...modalForm, category: e.target.value })}>
-                  <option value="Plumbing">Plumbing</option>
-                  <option value="Electrical">Electrical</option>
-                  <option value="Cleaning">Cleaning</option>
-                  <option value="Carpentry">Carpentry</option>
+                  <option value="">Select Category</option>
+                  {data.categories.map(c => (
+                    <option key={c._id} value={c.name}>{c.name}</option>
+                  ))}
                 </select>
               </div>
               <div className="modal-field">
@@ -153,7 +168,51 @@ function ProviderDashboard() {
         </div>
       )}
       <header className="admin-header">
-        <h2>Provider Workspace</h2>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h2>Provider Workspace</h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <span style={{ 
+              fontWeight: '600', 
+              fontSize: '0.9rem',
+              color: availability === 'available' ? 'var(--success)' : 'var(--text-muted)' 
+            }}>
+              {availability === 'available' ? '🟢 Accepting Jobs' : '🔴 Offline'}
+            </span>
+            <label style={{
+              position: 'relative',
+              display: 'inline-block',
+              width: '50px',
+              height: '24px',
+              cursor: 'pointer'
+            }}>
+              <input 
+                type="checkbox" 
+                checked={availability === 'available'}
+                onChange={toggleAvailability}
+                style={{ opacity: 0, width: 0, height: 0 }}
+              />
+              <span style={{
+                position: 'absolute',
+                cursor: 'pointer',
+                top: 0, left: 0, right: 0, bottom: 0,
+                backgroundColor: availability === 'available' ? 'var(--success)' : 'var(--border)',
+                transition: '.3s',
+                borderRadius: '34px'
+              }}>
+                <span style={{
+                  position: 'absolute',
+                  content: '""',
+                  height: '18px', width: '18px',
+                  left: availability === 'available' ? '28px' : '3px',
+                  bottom: '3px',
+                  backgroundColor: 'white',
+                  transition: '.3s',
+                  borderRadius: '50%'
+                }} />
+              </span>
+            </label>
+          </div>
+        </div>
         <div className="admin-tabs">
           <button className={`tab ${activeTab === 'metrics' ? 'active' : ''}`} onClick={() => setActiveTab('metrics')}>Overview</button>
           <button className={`tab ${activeTab === 'requests' ? 'active' : ''}`} onClick={() => setActiveTab('requests')}>Job Requests</button>
@@ -280,11 +339,12 @@ function ProviderDashboard() {
               <div className="form-group" style={{ marginBottom: '1rem' }}>
                 <label>Category</label>
                 <select value={newService.category} onChange={(e) => setNewService({...newService, category: e.target.value})}
+                  required
                   style={{ width: '100%', padding: '0.75rem', border: '1px solid var(--border)', borderRadius: '8px' }}>
-                  <option value="Plumbing">Plumbing</option>
-                  <option value="Electrical">Electrical</option>
-                  <option value="Cleaning">Cleaning</option>
-                  <option value="Carpentry">Carpentry</option>
+                  <option value="">Select Category</option>
+                  {data.categories.map(c => (
+                    <option key={c._id} value={c.name}>{c.name}</option>
+                  ))}
                 </select>
               </div>
               <div className="form-group" style={{ marginBottom: '1rem' }}>

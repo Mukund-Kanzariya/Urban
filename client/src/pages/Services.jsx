@@ -10,10 +10,11 @@ const categoryImages = {
   'Carpentry': '/images/carpentry.png',
 };
 
-const categories = ['All', 'Plumbing', 'Electrical', 'Cleaning', 'Carpentry'];
+// Categories will be fetched from API
 
 function Services() {
   const [services, setServices] = useState([]);
+  const [categories, setCategories] = useState(['All']);
   const [filteredServices, setFilteredServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -26,23 +27,27 @@ function Services() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchServices();
+    fetchData();
   }, []);
+
+  const fetchData = async () => {
+    try {
+      const [servicesRes, categoriesRes] = await Promise.all([
+        axios.get('/api/services'),
+        axios.get('/api/categories')
+      ]);
+      setServices(servicesRes.data);
+      setCategories(['All', ...categoriesRes.data.map(c => c.name)]);
+      setLoading(false);
+    } catch (err) {
+      setError('Failed to load data. Please try again.');
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     applyFilters();
   }, [services, search, activeCategory, sortBy]);
-
-  const fetchServices = async () => {
-    try {
-      const res = await axios.get('/api/services');
-      setServices(res.data);
-      setLoading(false);
-    } catch (err) {
-      setError('Failed to load services. Please try again.');
-      setLoading(false);
-    }
-  };
 
   const applyFilters = () => {
     let result = [...services];
@@ -87,8 +92,8 @@ function Services() {
         date: new Date().toISOString().split('T')[0],
         time: '10:00 AM'
       });
-      alert('Successfully Booked! Redirecting to your dashboard...');
-      navigate('/dashboard/customer');
+      alert('Successfully Booked! Redirecting to your bookings...');
+      navigate('/bookings');
     } catch (err) {
       alert(err.response?.data?.error || 'Booking failed!');
     }
@@ -175,10 +180,20 @@ function Services() {
                     <h3 className="card-title">{service.title}</h3>
                     
                     <div className="card-provider">
-                      <div className="card-provider-initials">
+                      <div className="card-provider-initials" style={{ position: 'relative' }}>
                         {(service.providerName || 'P').charAt(0).toUpperCase()}
+                        {service.providerAvailability === 'available' && (
+                          <span style={{ position: 'absolute', bottom: -2, right: -2, width: '10px', height: '10px', background: '#10b981', border: '2px solid white', borderRadius: '50%' }}></span>
+                        )}
                       </div>
-                      <span className="card-provider-name">{service.providerName || 'Professional'}</span>
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <span className="card-provider-name" style={{ lineHeight: '1.2' }}>{service.providerName || 'Professional'}</span>
+                        {service.providerAvailability && (
+                          <span style={{ fontSize: '0.65rem', fontWeight: 'bold', textTransform: 'uppercase', color: service.providerAvailability === 'available' ? '#10b981' : '#ef4444' }}>
+                            {service.providerAvailability === 'available' ? 'Accepting Jobs' : 'Offline'}
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     <div className="card-footer">

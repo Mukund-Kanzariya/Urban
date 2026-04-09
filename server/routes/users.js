@@ -89,11 +89,53 @@ router.get('/', verifyToken, async (req, res) => {
   }
 });
 
-// PUT /api/users/:id - Update a user (Admin only)
+// POST /api/users - Create a new user (Super Admin only)
+router.post('/', verifyToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'super_admin') {
+      return res.status(403).json({ error: 'Access denied. Super Administrator access required.' });
+    }
+    const { name, email, password, role } = req.body;
+
+    // Check if user exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ error: 'User already exists' });
+    }
+
+    const bcrypt = require('bcryptjs');
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const newUser = new User({
+      name,
+      email,
+      password: hashedPassword,
+      role: role || 'customer'
+    });
+
+    const savedUser = await newUser.save();
+
+    // Create a matching blank profile automatically
+    const Profile = require('../models/Profile');
+    const newProfile = new Profile({ userId: savedUser._id });
+    await newProfile.save();
+
+    // Remove password from response
+    const userToReturn = savedUser.toObject();
+    delete userToReturn.password;
+
+    res.status(201).json(userToReturn);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT /api/users/:id - Update a user (Super Admin only)
 router.put('/:id', verifyToken, async (req, res) => {
   try {
-    if (req.user.role !== 'admin' && req.user.role !== 'super_admin') {
-      return res.status(403).json({ error: 'Access denied. Administrator access required.' });
+    if (req.user.role !== 'super_admin') {
+      return res.status(403).json({ error: 'Access denied. Super Administrator access required.' });
     }
     const { name, role } = req.body;
     const updatedUser = await User.findByIdAndUpdate(
@@ -108,11 +150,11 @@ router.put('/:id', verifyToken, async (req, res) => {
   }
 });
 
-// DELETE /api/users/:id - Delete a user (Admin only)
+// DELETE /api/users/:id - Delete a user (Super Admin only)
 router.delete('/:id', verifyToken, async (req, res) => {
   try {
-    if (req.user.role !== 'admin' && req.user.role !== 'super_admin') {
-      return res.status(403).json({ error: 'Access denied. Administrator access required.' });
+    if (req.user.role !== 'super_admin') {
+      return res.status(403).json({ error: 'Access denied. Super Administrator access required.' });
     }
     await User.findByIdAndDelete(req.params.id);
     res.json({ message: 'User deleted successfully' });

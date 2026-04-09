@@ -30,7 +30,8 @@ router.get('/', async (req, res) => {
         $addFields: {
           providerName: '$providerData.name',
           providerEmail: '$providerData.email',
-          providerPhoto: { $arrayElemAt: ['$profileData.profilePicture', 0] }
+          providerPhoto: { $arrayElemAt: ['$profileData.profilePicture', 0] },
+          providerAvailability: { $arrayElemAt: ['$profileData.availability_status', 0] }
         }
       },
       { $project: { providerData: 0, profileData: 0 } }
