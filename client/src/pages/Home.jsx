@@ -171,7 +171,15 @@ function Home() {
                   </div>
                   <p className="review-quote">"{r.comment}"</p>
                   <div className="review-author">
-                    <div className="author-initial">{r.customerId?.name?.charAt(0) || '?'}</div>
+                    {r.customerId?.profilePicture ? (
+                      <img 
+                        src={r.customerId.profilePicture} 
+                        alt="Customer" 
+                        style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }} 
+                      />
+                    ) : (
+                      <div className="author-initial">{r.customerId?.name?.charAt(0) || '?'}</div>
+                    )}
                     <div className="author-info">
                       <h4>{r.customerId?.name || 'Anonymous User'}</h4>
                       <span>Booked: {r.bookingId?.serviceId?.title || 'Unknown Service'}</span>

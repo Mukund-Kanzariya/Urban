@@ -13,7 +13,7 @@ router.post('/', verifyToken, async (req, res) => {
       return res.status(403).json({ error: 'Only customers can book services!' });
     }
 
-    const { serviceId, providerId, date, time } = req.body;
+    const { serviceId, providerId, date, time, address, totalCost } = req.body;
 
     const newBooking = new Booking({
       customerId: req.user._id, // Set the customer ID strictly from their Token for security
@@ -21,6 +21,8 @@ router.post('/', verifyToken, async (req, res) => {
       providerId,
       date,
       time,
+      address,
+      totalCost,
       status: 'pending' // Default status when created
     });
 

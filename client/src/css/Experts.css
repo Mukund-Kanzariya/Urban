@@ -25,35 +25,36 @@
 /* Experts Layout - Unified Search and Grid */
 .experts-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 2rem;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1.5rem;
 }
 
 .expert-card {
-  background: var(--bg-surface);
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  padding: 1.5rem;
+  background: linear-gradient(145deg, #ffffff, #f9fafb);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: 16px;
+  padding: 1.25rem;
   text-align: center;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
 }
 
 .expert-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 15px 30px rgba(0,0,0,0.08);
-  border-color: var(--primary);
+  transform: translateY(-5px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  border-color: rgba(99, 102, 241, 0.3); /* Soft primary tint */
 }
 
 /* Photo and Experience Badge */
 .expert-photo-wrapper {
   position: relative;
-  width: 100px;
-  height: 100px;
-  margin: 0 auto 1.25rem auto;
+  width: 75px;
+  height: 75px;
+  margin: 0 auto 1rem auto;
 }
 
 .expert-photo {
@@ -61,73 +62,78 @@
   height: 100%;
   border-radius: 50%;
   object-fit: cover;
-  border: 3px solid #fff;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  border: 2px solid #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
 
 .expert-initials {
   width: 100%;
   height: 100%;
   border-radius: 50%;
-  background: var(--primary);
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
   color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 2rem;
+  font-size: 1.5rem;
   font-weight: 700;
 }
 
 .experience-badge {
   position: absolute;
-  bottom: -5px;
-  right: -5px;
+  bottom: 0px;
+  right: -8px;
   background: var(--secondary);
   color: #fff;
-  font-size: 0.7rem;
+  font-size: 0.6rem;
   font-weight: 800;
-  padding: 0.35rem 0.65rem;
+  padding: 0.2rem 0.4rem;
   border-radius: 100px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+  border: 2px solid #fff;
 }
 
 /* Details Section */
 .expert-info h3 {
-  font-size: 1.25rem;
+  font-size: 1.15rem;
+  font-weight: 700;
   margin-bottom: 0.25rem;
   color: var(--text-dark);
 }
 
 .expert-category {
-  font-size: 0.85rem;
-  font-weight: 700;
+  font-size: 0.75rem;
+  font-weight: 800;
   color: var(--primary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  margin-bottom: 1rem;
-  display: block;
+  margin-bottom: 0.5rem;
+  display: inline-block;
+  background: rgba(99, 102, 241, 0.08);
+  padding: 0.2rem 0.6rem;
+  border-radius: 100px;
 }
 
 .expert-bio {
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   color: var(--text-muted);
-  line-height: 1.6;
-  margin-bottom: 1.5rem;
+  line-height: 1.5;
+  margin-bottom: 1rem;
   display: -webkit-box;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  height: 4.8rem;
+  height: 2.6rem;
 }
 
 /* Ratings and Reviews */
 .expert-rating {
   margin-top: auto;
-  padding-top: 1.25rem;
+  padding-top: 1rem;
   border-top: 1px solid var(--border-light);
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.35rem;
 }
 
 .stars-wrapper {

@@ -74,7 +74,10 @@ function MyBookings() {
                       <strong>Date & Time:</strong> <span>{b.date} at {b.time}</span>
                     </div>
                     <div className="detail-row">
-                      <strong>Price:</strong> <span>${b.serviceId?.price}</span>
+                      <strong>Address:</strong> <span>{b.address || 'N/A'}</span>
+                    </div>
+                    <div className="detail-row">
+                      <strong>Total Cost:</strong> <span style={{color: '#10b981', fontWeight: 'bold'}}>Rs. {b.totalCost || b.serviceId?.price}</span>
                     </div>
                     
                     <div className="card-actions" style={{ marginTop: '15px', paddingTop: '15px', borderTop: '1px solid var(--border)' }}>

@@ -23,7 +23,7 @@ const Experts = () => {
     fetchExperts();
   }, []);
 
-  const filteredExperts = experts.filter(expert => 
+  const filteredExperts = experts.filter(expert =>
     expert.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     (expert.profileData?.serviceCategory || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -48,18 +48,18 @@ const Experts = () => {
       <header className="experts-header">
         <h1>Meet Our Experts</h1>
         <p>Vetted, highly-rated professionals ready to help with your next project.</p>
-        
+
         {/* Simple Search Row */}
         <div style={{ maxWidth: '600px', margin: '2rem auto 0 auto', position: 'relative' }}>
-          <input 
-            type="text" 
-            placeholder="Search experts by name or specialty..." 
+          <input
+            type="text"
+            placeholder="Search experts by name or specialty..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             style={{ width: '100%', padding: '0.85rem 1rem 0.85rem 3rem', borderRadius: '12px', border: '1px solid var(--border)', fontSize: '1rem' }}
           />
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', width: '20px', color: 'var(--text-muted)' }}>
-            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
         </div>
       </header>
@@ -91,7 +91,7 @@ const Experts = () => {
                   <span className="expert-category">{expert.profileData?.serviceCategory || 'Service Hub Pro'}</span>
                   {expert.profileData?.is_verified && (
                     <span title="Verified Professional" style={{ color: '#0ea5e9' }}>
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" /></svg>
                     </span>
                   )}
                 </div>
@@ -104,7 +104,7 @@ const Experts = () => {
                 <p className="expert-bio">{expert.profileData?.bio || `${expert.name} is a dedicated professional committed to delivering high-quality service at ServiceHub.`}</p>
               </div>
 
-              <div className="expert-rating">
+              {/* <div className="expert-rating">
                 <div className="stars-wrapper">
                   {renderStars(expert.averageRating)}
                 </div>
@@ -113,11 +113,17 @@ const Experts = () => {
                     ? `${expert.averageRating.toFixed(1)} / 5 (${expert.reviewCount} Reviews)` 
                     : "No reviews yet"}
                 </span>
-              </div>
+              </div> */}
 
-              <Link to="/services" className="view-profile-btn">
-                Book {expert.name.split(' ')[0]}
-              </Link>
+              <div className="expert-contact-ui" style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', color: 'var(--text-muted)' }}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '16px', height: '16px' }}>
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                  <polyline points="22,6 12,13 2,6"></polyline>
+                </svg>
+                <a href={`mailto:${expert.email}`} style={{ color: 'var(--primary)', textDecoration: 'none', fontSize: '0.9rem', fontWeight: '500' }}>
+                  {expert.email}
+                </a>
+              </div>
             </div>
           ))
         )}

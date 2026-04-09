@@ -18,6 +18,7 @@ function Services() {
   const [filteredServices, setFilteredServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [bookingModal, setBookingModal] = useState({ isOpen: false, serviceId: null, providerId: null, date: '', time: '', address: '', totalCost: 0 });
   
   // Filter & Sort State
   const [search, setSearch] = useState('');
@@ -79,20 +80,27 @@ function Services() {
     setFilteredServices(result);
   };
 
-  const handleBook = async (serviceId, providerId) => {
+  const handleBookClick = (serviceId, providerId, price) => {
     const token = sessionStorage.getItem('token');
     if (!token) {
       return navigate('/login', { state: { message: "Please log in to book a service!" } });
     }
+    setBookingModal({ isOpen: true, serviceId, providerId, date: new Date().toISOString().split('T')[0], time: '10:00', address: '', totalCost: price });
+  };
 
+  const submitBooking = async (e) => {
+    e.preventDefault();
     try {
       await axios.post('/api/bookings', {
-        serviceId,
-        providerId,
-        date: new Date().toISOString().split('T')[0],
-        time: '10:00 AM'
+        serviceId: bookingModal.serviceId,
+        providerId: bookingModal.providerId,
+        date: bookingModal.date,
+        time: bookingModal.time,
+        address: bookingModal.address,
+        totalCost: bookingModal.totalCost
       });
       alert('Successfully Booked! Redirecting to your bookings...');
+      setBookingModal({ isOpen: false, serviceId: null, providerId: null, date: '', time: '', address: '', totalCost: 0 });
       navigate('/bookings');
     } catch (err) {
       alert(err.response?.data?.error || 'Booking failed!');
@@ -203,7 +211,7 @@ function Services() {
                       </div>
                       <button 
                         className="card-btn"
-                        onClick={() => handleBook(service._id, service.providerId)}
+                        onClick={() => handleBookClick(service._id, service.providerId, service.price)}
                       >
                         Book Now
                       </button>
@@ -215,6 +223,37 @@ function Services() {
           </div>
         </main>
       </div>
+
+      {/* Booking Modal */}
+      {bookingModal.isOpen && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div style={{ backgroundColor: 'white', padding: '2rem', borderRadius: '8px', width: '90%', maxWidth: '400px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
+            <h3 style={{ marginTop: 0, marginBottom: '1.5rem', color: '#1f2937' }}>Select Date & Time</h3>
+            <form onSubmit={submitBooking}>
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>Date</label>
+                <input type="date" required value={bookingModal.date} onChange={(e) => setBookingModal({...bookingModal, date: e.target.value})} style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid #d1d5db', fontSize: '1rem' }} />
+              </div>
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>Time</label>
+                <input type="time" required value={bookingModal.time} onChange={(e) => setBookingModal({...bookingModal, time: e.target.value})} style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid #d1d5db', fontSize: '1rem' }} />
+              </div>
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>Full Service Address</label>
+                <textarea required value={bookingModal.address} onChange={(e) => setBookingModal({...bookingModal, address: e.target.value})} style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid #d1d5db', fontSize: '1rem', minHeight: '80px', resize: 'vertical' }} placeholder="Enter complete flat, building, strereet..." />
+              </div>
+              <div style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#f3f4f6', padding: '1rem', borderRadius: '4px' }}>
+                <span style={{ fontWeight: '600' }}>Total Cost:</span>
+                <span style={{ fontWeight: '700', fontSize: '1.25rem', color: '#10b981' }}>Rs. {bookingModal.totalCost}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
+                <button type="button" onClick={() => setBookingModal({ isOpen: false, serviceId: null, providerId: null, date: '', time: '', address: '', totalCost: 0 })} style={{ padding: '0.5rem 1rem', border: 'none', background: '#e5e7eb', color: '#374151', borderRadius: '4px', cursor: 'pointer', fontWeight: '500' }}>Cancel</button>
+                <button type="submit" style={{ padding: '0.5rem 1rem', border: 'none', background: '#4f46e5', color: 'white', borderRadius: '4px', cursor: 'pointer', fontWeight: '500' }}>Confirm Booking</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

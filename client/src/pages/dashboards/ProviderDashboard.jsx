@@ -267,7 +267,8 @@ function ProviderDashboard() {
                       )}
                       <div>
                         <p style={{ margin: 0 }}><strong>Customer:</strong> {b.customerId?.name}</p>
-                        <p style={{ margin: 0, fontSize: '0.85rem' }}>{b.date} at {b.time}</p>
+                        <p style={{ margin: '0.2rem 0', fontSize: '0.9rem' }}><strong>Address:</strong> {b.address || 'N/A'}</p>
+                        <p style={{ margin: 0, fontSize: '0.85rem' }}>{b.date} at {b.time} | <span style={{color: '#10b981', fontWeight: 'bold'}}>Total: Rs. {b.totalCost || b.serviceId?.price}</span></p>
                       </div>
                     </div>
                     <div className="action-buttons">

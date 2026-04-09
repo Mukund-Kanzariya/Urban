@@ -28,7 +28,7 @@ function AddReview() {
       setStatus({ type: 'success', msg: 'Review seamlessly submitted! Redirecting...' });
       
       // Send them back to their dashboard safely after 2 seconds
-      setTimeout(() => navigate('/dashboard/customer'), 2000);
+      setTimeout(() => navigate('/bookings'), 2000);
     } catch (error) {
       setStatus({ type: 'error', msg: error.response?.data?.message || 'Failed to submit review. Have you already reviewed this?' });
       setLoading(false);
@@ -116,7 +116,7 @@ function AddReview() {
             <button
               type="button"
               className="btn"
-              onClick={() => navigate('/dashboard/customer')}
+              onClick={() => navigate('/bookings')}
               style={{ flex: 1, backgroundColor: '#f1f5f9', color: '#475569' }}
             >
               Cancel

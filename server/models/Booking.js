@@ -8,6 +8,8 @@ const bookingSchema = new mongoose.Schema({
   
   date: { type: String, required: true }, // Date of service
   time: { type: String, required: true }, // Time of service
+  address: { type: String, required: true }, // Address of service
+  totalCost: { type: Number, required: true }, // Total cost value
   
   // Status helps the provider "Accept" or "Reject" the booking
   status: { type: String, enum: ['pending', 'accepted', 'rejected', 'completed'], default: 'pending' }
