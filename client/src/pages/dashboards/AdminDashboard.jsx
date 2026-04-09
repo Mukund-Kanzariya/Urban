@@ -125,6 +125,12 @@ function AdminDashboard() {
 
   if (loading) return <div className="loading-spinner">Loading Admin Panel...</div>;
 
+  // Calculate Total Admin Revenue (Commissions from completed jobs)
+  const totalAdminEarn = data.bookings
+    .filter(b => b.status === 'completed')
+    .reduce((acc, b) => acc + (b.commission || 0), 0)
+    .toFixed(2);
+
   return (
     <div className="admin-container">
 
@@ -215,9 +221,8 @@ function AdminDashboard() {
                     </select>
                   </div>
                   <div className="modal-field">
-                    <label>Price ($)</label>
-                    <input type="number" value={modalForm.price || ''}
-                      onChange={(e) => setModalForm({ ...modalForm, price: e.target.value })} />
+                    <label>Price (Rs.)</label>
+                    <input type="number" value={modalForm.price || ''} onChange={(e) => setModalForm({ ...modalForm, price: e.target.value })} />
                   </div>
                   <div className="modal-field">
                     <label>Location</label>
@@ -311,7 +316,7 @@ function AdminDashboard() {
             <div className="metric-card"><h3>Total Services</h3><p className="metric-number">{data.services.length}</p></div>
             <div className="metric-card"><h3>Total Categories</h3><p className="metric-number">{data.categories.length}</p></div>
             <div className="metric-card"><h3>Total Bookings</h3><p className="metric-number">{data.bookings.length}</p></div>
-            <div className="metric-card"><h3>Total Reviews</h3><p className="metric-number">{data.reviews.length}</p></div>
+            <div className="metric-card"><h3>Platform Revenue</h3><p className="metric-number" style={{ color: '#4f46e5' }}>Rs. {totalAdminEarn}</p></div>
           </div>
         )}
 
@@ -382,7 +387,7 @@ function AdminDashboard() {
                     <tr key={s._id}>
                       <td style={{ fontWeight: '500' }}>{s.title}</td>
                       <td>{s.category}</td>
-                      <td>${s.price}</td>
+                      <td>Rs. {s.price}</td>
                       <td>
                         <div className="info-with-photo">
                           {s.providerPhoto ? (
@@ -418,7 +423,7 @@ function AdminDashboard() {
                   <th>Service</th>
                   <th>Customer</th>
                   <th>Provider</th>
-                  <th>Date</th>
+                  <th>Financials</th>
                   <th>Status</th>
                 </tr>
               </thead>
@@ -439,7 +444,16 @@ function AdminDashboard() {
                       </div>
                     </td>
                     <td>{b.providerId?.name}</td>
-                    <td>{b.date} {b.time}</td>
+                    <td>
+                      <div style={{ fontSize: '0.85rem' }}>
+                        <div><strong>Price:</strong> Rs. {b.price || b.totalCost || b.serviceId?.price || 0}</div>
+                        <div><strong>Provider:</strong> Rs. {b.provider_earns || b.providerEarn || ((b.price || b.totalCost || b.serviceId?.price || 0) * 0.8).toFixed(2)}</div>
+                        <div style={{ color: '#4f46e5' }}><strong>Admin:</strong> Rs. {b.commission || ((b.price || b.totalCost || b.serviceId?.price || 0) * 0.2).toFixed(2)}</div>
+                        <div style={{ marginTop: '0.2rem', textTransform: 'capitalize' }}>
+                          <strong style={{ color: '#6b7280' }}>Payment:</strong> <span style={{ color: b.payment?.paymentStatus === 'completed' ? '#10b981' : '#ef4444', fontWeight: 'bold' }}>{b.payment?.paymentStatus || 'pending'}</span> <span style={{fontSize: '0.75rem', color: '#6b7280'}}>(via {b.payment?.paymentMethod || 'cash'})</span>
+                        </div>
+                      </div>
+                    </td>
                     <td><span className={`status-badge status-${b.status.toLowerCase()}`}>{b.status}</span></td>
                   </tr>
                 ))}

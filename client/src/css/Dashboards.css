@@ -249,6 +249,10 @@
   gap: 0.4rem;
   align-items: center;
   flex-wrap: nowrap;
+  justify-content: flex-end;
+}
+.data-table th:last-child {
+  text-align: right;
 }
 
 /* ── Button Variants ── */

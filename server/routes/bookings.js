@@ -3,6 +3,7 @@ const express = require('express');
 const router = express.Router();
 const Booking = require('../models/Booking');
 const Profile = require('../models/Profile');
+const Payment = require('../models/Payment');
 const verifyToken = require('../middleware/auth');
 
 // POST /api/bookings - Book a service
@@ -13,7 +14,10 @@ router.post('/', verifyToken, async (req, res) => {
       return res.status(403).json({ error: 'Only customers can book services!' });
     }
 
-    const { serviceId, providerId, date, time, address, totalCost } = req.body;
+    const { serviceId, providerId, date, time, service_address, price, paymentMethod } = req.body;
+
+    const commission = parseFloat((price * 0.20).toFixed(2));
+    const provider_earns = parseFloat((price * 0.80).toFixed(2));
 
     const newBooking = new Booking({
       customerId: req.user._id, // Set the customer ID strictly from their Token for security
@@ -21,12 +25,26 @@ router.post('/', verifyToken, async (req, res) => {
       providerId,
       date,
       time,
-      address,
-      totalCost,
+      service_address,
+      price,
+      commission,
+      provider_earns,
       status: 'pending' // Default status when created
     });
 
     const savedBooking = await newBooking.save();
+
+    // Create tracking Payment log
+    const newPayment = new Payment({
+      bookingId: savedBooking._id,
+      customerId: req.user._id,
+      providerId: providerId,
+      amount: price,
+      paymentMethod: paymentMethod || 'cash',
+      paymentStatus: 'pending' // Initial status
+    });
+    await newPayment.save();
+
     res.status(201).json(savedBooking);
 
   } catch (err) {
@@ -57,12 +75,20 @@ router.get('/', verifyToken, async (req, res) => {
     const customerIds = bookings.map(b => b.customerId?._id);
     const profiles = await Profile.find({ userId: { $in: customerIds } }, 'userId profilePicture');
 
+    // Fetch payments for the bookings
+    const bookingIds = bookings.map(b => b._id);
+    const payments = await Payment.find({ bookingId: { $in: bookingIds } });
+
     const bookingsWithPhotos = bookings.map(b => {
       const profile = profiles.find(p => p.userId.toString() === b.customerId?._id.toString());
+      const payment = payments.find(p => p.bookingId.toString() === b._id.toString());
+      
       const plainBooking = b.toObject();
       if (plainBooking.customerId) {
         plainBooking.customerId.profilePicture = profile ? profile.profilePicture : '';
       }
+      plainBooking.payment = payment ? payment.toObject() : null;
+      
       return plainBooking;
     });
 
@@ -97,8 +123,21 @@ router.put('/:id/status', verifyToken, async (req, res) => {
        return res.status(403).json({ error: 'You can only update your own bookings' });
     }
 
-    booking.status = status;
-    const updatedBooking = await booking.save();
+    const updatedBooking = await Booking.findByIdAndUpdate(
+      req.params.id, 
+      { status }, 
+      { new: true } // Return the strictly updated document without validating unspecified fields
+    );
+
+    // If marked completed, clear the payment queue securely
+    if (status === 'completed') {
+       await Payment.findOneAndUpdate(
+         { bookingId: updatedBooking._id },
+         { paymentStatus: 'completed' },
+         { new: true }
+       );
+    }
+
     res.json(updatedBooking);
 
   } catch (err) {

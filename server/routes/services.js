@@ -27,14 +27,32 @@ router.get('/', async (req, res) => {
         }
       },
       {
+        $lookup: {
+          from: 'bookings',
+          localField: 'providerId',
+          foreignField: 'providerId',
+          as: 'providerBookings'
+        }
+      },
+      {
+        $lookup: {
+          from: 'reviews',
+          localField: 'providerBookings._id',
+          foreignField: 'bookingId',
+          as: 'reviewsData'
+        }
+      },
+      {
         $addFields: {
           providerName: '$providerData.name',
           providerEmail: '$providerData.email',
           providerPhoto: { $arrayElemAt: ['$profileData.profilePicture', 0] },
-          providerAvailability: { $arrayElemAt: ['$profileData.availability_status', 0] }
+          providerAvailability: { $arrayElemAt: ['$profileData.availability_status', 0] },
+          providerRating: { $avg: '$reviewsData.rating' },
+          providerTotalReviews: { $size: '$reviewsData' }
         }
       },
-      { $project: { providerData: 0, profileData: 0 } }
+      { $project: { providerData: 0, profileData: 0, reviewsData: 0, providerBookings: 0 } }
     ]);
 
     res.json(services);

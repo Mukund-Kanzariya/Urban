@@ -18,9 +18,17 @@ router.get('/providers', async (req, res) => {
       },
       {
         $lookup: {
-          from: 'reviews',
+          from: 'bookings',
           localField: '_id',
           foreignField: 'providerId',
+          as: 'providerBookings'
+        }
+      },
+      {
+        $lookup: {
+          from: 'reviews',
+          localField: 'providerBookings._id',
+          foreignField: 'bookingId',
           as: 'reviews'
         }
       },
@@ -36,6 +44,7 @@ router.get('/providers', async (req, res) => {
           password: 0,
           profile: 0,
           reviews: 0,
+          providerBookings: 0,
           'profileData.userId': 0
         }
       }

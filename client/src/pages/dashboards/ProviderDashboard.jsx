@@ -103,7 +103,7 @@ function ProviderDashboard() {
       alert('Failed to create service');
     }
   };
-  
+
   const deleteService = async (id) => {
     if (window.confirm('Delete this listing permanently?')) {
       try {
@@ -119,6 +119,12 @@ function ProviderDashboard() {
   const avgRating = data.reviews.length > 0
     ? (data.reviews.reduce((acc, r) => acc + r.rating, 0) / data.reviews.length).toFixed(1)
     : 'New';
+
+  // Calculate Total Provider Earnings dynamically
+  const totalEarnings = data.bookings
+    .filter(b => b.status === 'completed')
+    .reduce((acc, b) => acc + (b.provider_earns || b.providerEarn || 0), 0)
+    .toFixed(2);
 
   return (
     <div className="admin-container">
@@ -148,7 +154,7 @@ function ProviderDashboard() {
                 </select>
               </div>
               <div className="modal-field">
-                <label>Price ($)</label>
+                <label>Price (Rs.)</label>
                 <input type="number" value={modalForm.price || ''}
                   onChange={(e) => setModalForm({ ...modalForm, price: e.target.value })} />
               </div>
@@ -171,10 +177,10 @@ function ProviderDashboard() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h2>Provider Workspace</h2>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <span style={{ 
-              fontWeight: '600', 
+            <span style={{
+              fontWeight: '600',
               fontSize: '0.9rem',
-              color: availability === 'available' ? 'var(--success)' : 'var(--text-muted)' 
+              color: availability === 'available' ? 'var(--success)' : 'var(--text-muted)'
             }}>
               {availability === 'available' ? '🟢 Accepting Jobs' : '🔴 Offline'}
             </span>
@@ -185,8 +191,8 @@ function ProviderDashboard() {
               height: '24px',
               cursor: 'pointer'
             }}>
-              <input 
-                type="checkbox" 
+              <input
+                type="checkbox"
                 checked={availability === 'available'}
                 onChange={toggleAvailability}
                 style={{ opacity: 0, width: 0, height: 0 }}
@@ -237,8 +243,12 @@ function ProviderDashboard() {
             <div className="metric-card">
               <h3>Average Rating</h3>
               <p className="metric-number" style={{ color: '#fbbf24' }}>
-                {avgRating} {avgRating !== 'New' && <span style={{fontSize: '1.5rem'}}>★</span>}
+                {avgRating} {avgRating !== 'New' && <span style={{ fontSize: '1.5rem' }}>★</span>}
               </p>
+            </div>
+            <div className="metric-card">
+              <h3>Total Earnings</h3>
+              <p className="metric-number" style={{ color: '#10b981' }}>Rs. {totalEarnings}</p>
             </div>
           </div>
         )}
@@ -267,8 +277,15 @@ function ProviderDashboard() {
                       )}
                       <div>
                         <p style={{ margin: 0 }}><strong>Customer:</strong> {b.customerId?.name}</p>
-                        <p style={{ margin: '0.2rem 0', fontSize: '0.9rem' }}><strong>Address:</strong> {b.address || 'N/A'}</p>
-                        <p style={{ margin: 0, fontSize: '0.85rem' }}>{b.date} at {b.time} | <span style={{color: '#10b981', fontWeight: 'bold'}}>Total: Rs. {b.totalCost || b.serviceId?.price}</span></p>
+                        <p style={{ margin: '0.2rem 0', fontSize: '0.9rem' }}><strong>Address:</strong> {b.service_address || b.address || 'Address not provided'}</p>
+                        <p style={{ margin: 0, fontSize: '0.85rem' }}>{b.date} at {b.time}</p>
+                        <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.85rem' }}>
+                          Price: Rs. {b.price || b.totalCost || b.serviceId?.price || 0} <span style={{ color: '#d1d5db', margin: '0 4px' }}>|</span>
+                          <span style={{ color: '#10b981', fontWeight: 'bold' }}>Your Earnings: Rs. {b.provider_earns || b.providerEarn || ((b.price || b.totalCost || b.serviceId?.price || 0) * 0.8).toFixed(2)}</span>
+                        </p>
+                        <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.85rem', color: '#6b7280', textTransform: 'capitalize' }}>
+                          <strong>Payment:</strong> <span style={{ color: b.payment?.paymentStatus === 'completed' ? '#10b981' : '#ef4444', fontWeight: 'bold' }}>{b.payment?.paymentStatus || 'pending'}</span> <span style={{fontSize: '0.75rem'}}>(via {b.payment?.paymentMethod || 'cash'})</span>
+                        </p>
                       </div>
                     </div>
                     <div className="action-buttons">
@@ -311,7 +328,7 @@ function ProviderDashboard() {
                         </div>
                       )}
                     </td>
-                    <td>{s.title}</td><td>{s.category}</td><td>${s.price}</td><td>{s.location}</td>
+                    <td>{s.title}</td><td>{s.category}</td><td>Rs. {s.price}</td><td>{s.location}</td>
                     <td className="action-cell">
                       <button className="btn btn-warning btn-sm" onClick={() => openModal(s)}>Update</button>
                       <button className="btn btn-danger btn-sm" onClick={() => deleteService(s._id)}>Delete</button>
@@ -335,11 +352,11 @@ function ProviderDashboard() {
                 <label>Service Title</label>
                 <input type="text" placeholder="e.g., Fix Leaky Pipe" required
                   style={{ width: '100%', padding: '0.75rem', border: '1px solid var(--border)', borderRadius: '8px' }}
-                  value={newService.title} onChange={(e) => setNewService({...newService, title: e.target.value})} />
+                  value={newService.title} onChange={(e) => setNewService({ ...newService, title: e.target.value })} />
               </div>
               <div className="form-group" style={{ marginBottom: '1rem' }}>
                 <label>Category</label>
-                <select value={newService.category} onChange={(e) => setNewService({...newService, category: e.target.value})}
+                <select value={newService.category} onChange={(e) => setNewService({ ...newService, category: e.target.value })}
                   required
                   style={{ width: '100%', padding: '0.75rem', border: '1px solid var(--border)', borderRadius: '8px' }}>
                   <option value="">Select Category</option>
@@ -349,16 +366,16 @@ function ProviderDashboard() {
                 </select>
               </div>
               <div className="form-group" style={{ marginBottom: '1rem' }}>
-                <label>Price ($)</label>
-                <input type="number" placeholder="e.g., 150" required
+                <label>Price (Rs.)</label>
+                <input type="number" placeholder="e.g., 1500" required
                   style={{ width: '100%', padding: '0.75rem', border: '1px solid var(--border)', borderRadius: '8px' }}
-                  value={newService.price} onChange={(e) => setNewService({...newService, price: e.target.value})} />
+                  value={newService.price} onChange={(e) => setNewService({ ...newService, price: e.target.value })} />
               </div>
               <div className="form-group" style={{ marginBottom: '1.5rem' }}>
                 <label>Service Location</label>
                 <input type="text" placeholder="e.g., Downtown Area" required
                   style={{ width: '100%', padding: '0.75rem', border: '1px solid var(--border)', borderRadius: '8px' }}
-                  value={newService.location} onChange={(e) => setNewService({...newService, location: e.target.value})} />
+                  value={newService.location} onChange={(e) => setNewService({ ...newService, location: e.target.value })} />
               </div>
               <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '1rem', fontSize: '1.1rem' }}>Post Service Securely</button>
             </form>
@@ -379,7 +396,7 @@ function ProviderDashboard() {
                   <tr key={r._id}>
                     <td>{r.bookingId?.serviceId?.title || 'Unknown Job'}</td>
                     <td>{r.customerId?.name || 'Unknown'}</td>
-                    <td style={{ color: '#fbbf24', fontSize: '1.2rem', whiteSpace:'nowrap' }}>
+                    <td style={{ color: '#fbbf24', fontSize: '1.2rem', whiteSpace: 'nowrap' }}>
                       {'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}
                     </td>
                     <td style={{ maxWidth: '400px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.comment}</td>

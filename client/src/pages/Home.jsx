@@ -4,12 +4,25 @@ import axios from 'axios';
 import '../css/Home.css'; 
 import '../css/StaticPages.css';
 
-// Map service categories to their images
-const categoryImages = {
-  'Plumbing': '/images/plumbing.png',
-  'Electrical': '/images/electrical.png',
-  'Cleaning': '/images/cleaning.png',
-  'Carpentry': '/images/carpentry.png',
+// Apply body gradient strictly while on Home page
+// and provide realistic, diverse images for category cards
+const diverseServiceImages = [
+  'https://images.unsplash.com/photo-1607427293702-036933bbf746?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1581578731548-c64695cc6952?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1540555700478-4be289fbecef?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1615873968403-89e068629265?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1581578326227-18116b43d1cc?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1505798577917-a65157d3320a?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+];
+
+const getDynamicImage = (id) => {
+  if (!id) return diverseServiceImages[0];
+  const charSum = id.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
+  return diverseServiceImages[charSum % diverseServiceImages.length];
 };
 
 function Home() {
@@ -17,6 +30,9 @@ function Home() {
   const [categories, setCategories] = useState([]);
 
   useEffect(() => {
+    // Handle body background injection natively
+    document.body.classList.add('home-page-body');
+    
     // Fetch reviews
     axios.get('/api/reviews')
       .then((res) => setReviews(res.data))
@@ -26,10 +42,15 @@ function Home() {
     axios.get('/api/categories')
       .then((res) => setCategories(res.data))
       .catch((err) => console.log('Could not load categories'));
+
+    // Cleanup background when navigating away
+    return () => {
+      document.body.classList.remove('home-page-body');
+    };
   }, []);
 
   return (
-    <div>
+    <div style={{ background: 'linear-gradient(to bottom, #f5f7fa, #eef2f3)', minHeight: '100vh', paddingBottom: '0' }}>
       {/* Hero Section with Background Image */}
       <div style={{
         position: 'relative',
@@ -88,7 +109,7 @@ function Home() {
               className="category-card-home"
               >
                 <img 
-                  src={categoryImages[cat.name] || '/images/plumbing.png'} 
+                  src={getDynamicImage(cat._id || cat.name)} 
                   alt={cat.name} 
                   style={{ width: '100%', height: '160px', objectFit: 'cover', display: 'block' }}
                 />
@@ -108,7 +129,7 @@ function Home() {
       </div>
 
       {/* How It Works */}
-      <div style={{ background: '#fff', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)' }}>
+      <div style={{ background: 'transparent', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)' }}>
         <div className="container" style={{ padding: '2.5rem 1rem' }}>
           <h2 style={{ textAlign: 'center', marginBottom: '1.5rem', fontSize: '1.35rem' }}>How It Works</h2>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1.25rem' }}>

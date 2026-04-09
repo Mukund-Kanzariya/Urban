@@ -30,11 +30,7 @@ router.post('/', verifyToken, async (req, res) => {
             return res.status(400).json({ message: 'Service must be completed before reviewing' });
         }
 
-        // 4. Check if they already reviewed this booking
-        const existingReview = await Review.findOne({ bookingId: booking._id });
-        if (existingReview) {
-            return res.status(400).json({ message: 'You have already reviewed this booking' });
-        }
+        // 4. Removed the single-review restriction for a booking to allow unlimited customer reviews!
 
         // 5. Create the review!
         const newReview = new Review({

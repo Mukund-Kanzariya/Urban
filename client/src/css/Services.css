@@ -153,23 +153,26 @@
 }
 
 .marketplace-card {
-  background: #fff;
-  border: 1px solid var(--border);
-  border-radius: 16px;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  border-radius: 20px;
   overflow: hidden;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   flex-direction: column;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+  position: relative;
 }
 
 .marketplace-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 24px rgba(0,0,0,0.06);
+  transform: translateY(-6px) scale(1.01);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+  border-color: rgba(0, 0, 0, 0.08);
 }
 
 .card-banner {
   position: relative;
-  height: 160px;
+  height: 180px;
   overflow: hidden;
 }
 
@@ -181,72 +184,95 @@
 
 .category-badge {
   position: absolute;
-  top: 0.75rem;
-  right: 0.75rem;
-  background: #fff;
-  padding: 0.25rem 0.6rem;
-  border-radius: 6px;
-  font-size: 0.7rem;
+  top: 1rem;
+  right: 1rem;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding: 0.4rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
   font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
   color: var(--primary);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.08);
 }
 
 .card-body {
-  padding: 1.25rem;
+  padding: 1.5rem;
   flex: 1;
   display: flex;
   flex-direction: column;
 }
 
 .card-title {
-  font-size: 1.05rem;
-  font-weight: 700;
+  font-size: 1.2rem;
+  font-weight: 800;
   color: var(--text-dark);
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
+  line-height: 1.3;
 }
 
 .card-provider {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.card-provider-initials {
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), #3b82f6);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .card-provider-img {
-  width: 28px;
-  height: 28px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
   object-fit: cover;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .card-provider-name {
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   font-weight: 600;
-  color: var(--text-muted);
+  color: var(--text-dark);
 }
 
 .card-footer {
   margin-top: auto;
-  padding-top: 1rem;
-  border-top: 1px solid var(--border-light);
+  padding-top: 1.25rem;
+  border-top: 1px dashed var(--border-light);
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
 .card-price .label {
-  font-size: 0.65rem;
+  font-size: 0.7rem;
   color: var(--text-muted);
   text-transform: uppercase;
-  font-weight: 700;
+  font-weight: 800;
+  letter-spacing: 0.5px;
   display: block;
 }
 
 .card-price .value {
-  font-size: 1.15rem;
-  font-weight: 800;
+  font-size: 1.35rem;
+  font-weight: 900;
   color: var(--primary);
+  letter-spacing: -0.5px;
 }
 
 /* Button FIX */
@@ -254,23 +280,24 @@
   background-color: var(--secondary) !important;
   color: #000 !important; /* Force visible black text */
   border: none;
-  padding: 0.6rem 1.1rem;
-  border-radius: 8px;
+  padding: 0.7rem 1.4rem;
+  border-radius: 99px;
   font-weight: 800; /* Extra bold */
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   cursor: pointer;
-  transition: all 0.2s;
-  box-shadow: 0 4px 10px rgba(251, 191, 36, 0.3);
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 6px 12px rgba(251, 191, 36, 0.25);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   display: block;
-  min-width: 100px;
+  min-width: 110px;
   text-align: center;
 }
 
 .card-btn:hover {
   background-color: var(--secondary-hover) !important;
-  transform: scale(1.03);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 8px 16px rgba(251, 191, 36, 0.4);
 }
 
 /* Empty State */
