@@ -30,9 +30,6 @@ function Home() {
   const [categories, setCategories] = useState([]);
 
   useEffect(() => {
-    // Handle body background injection natively
-    document.body.classList.add('home-page-body');
-    
     // Fetch reviews
     axios.get('/api/reviews')
       .then((res) => setReviews(res.data))
@@ -42,15 +39,10 @@ function Home() {
     axios.get('/api/categories')
       .then((res) => setCategories(res.data))
       .catch((err) => console.log('Could not load categories'));
-
-    // Cleanup background when navigating away
-    return () => {
-      document.body.classList.remove('home-page-body');
-    };
   }, []);
 
   return (
-    <div style={{ background: 'linear-gradient(to bottom, #f5f7fa, #eef2f3)', minHeight: '100vh', paddingBottom: '0' }}>
+    <div>
       {/* Hero Section with Background Image */}
       <div style={{
         position: 'relative',
