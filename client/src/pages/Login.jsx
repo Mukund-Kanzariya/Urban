@@ -23,7 +23,11 @@ function Login() {
       sessionStorage.setItem('user', JSON.stringify(response.data.user)); // Also save name/role
       
       // 3. Immediately redirect to Dashboard, and force hard refresh to update Navbar
-      navigate(`/dashboard/${response.data.user.role}`);
+      if (response.data.user.role === 'customer') {
+        navigate('/');
+      } else {
+        navigate(`/dashboard/${response.data.user.role}`);
+      }
       window.location.reload(); 
     } catch (err) {
       setError(err.response?.data?.error || 'Login Failed. Check credentials.');

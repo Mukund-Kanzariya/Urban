@@ -1,16 +1,16 @@
 /* Global.css - Clean Professional Theme */
 
 :root {
-  --bg-page: #fafafa;
+  --bg-page: #EFF6FF;
   --bg-surface: #ffffff;
 
   --text-dark: #222222;
   --text-body: #444444;
   --text-muted: #777777;
 
-  --primary: #2d6a4f;
-  --primary-hover: #1b4332;
-  --primary-light: #d8f3dc;
+  --primary: #1E3A8A;
+  --primary-hover: #1e3a8a;
+  --primary-light: #eff6ff;
 
   --success: #2d6a4f;
   --danger: #c1292e;

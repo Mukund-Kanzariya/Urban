@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate,Link } from 'react-router-dom';
 import '../css/Auth.css';
 
 function Register() {
@@ -57,6 +57,7 @@ function Register() {
           </div>
 
           <button type="submit" className="btn btn-primary auth-submit">Register Now</button>
+          <div style={{ textAlign: 'center', fontSize: '0.9rem', color: 'var(--text-muted)' }}>Already Have an Account? <Link to="/login" style={{ color: 'var(--primary)', fontWeight: '600', textDecoration: 'none' }}>Login here</Link></div>
         </form>
       </div>
     </div>

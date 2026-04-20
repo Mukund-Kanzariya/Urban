@@ -52,8 +52,8 @@ router.post('/', verifyToken, async (req, res) => {
 // @access  Public
 router.get('/', async (req, res) => {
     try {
-        // Fetch up to 6 reviews that have 4 or 5 stars, newest first
-        const reviews = await Review.find({ rating: { $gte: 4 } })
+        // Fetch recent reviews (no rating filter)
+        const reviews = await Review.find()
             .populate('customerId', 'name') // Pulls in the customer's name!
             .populate({
                 path: 'bookingId',
