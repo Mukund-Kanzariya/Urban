@@ -39,6 +39,14 @@ const getDynamicImage = (nameOrId) => {
 function Home() {
   const [reviews, setReviews] = useState([]);
   const [categories, setCategories] = useState([]);
+  
+  const getInitials = (name = '') => {
+    if (!name) return '?';
+    const parts = name.trim().split(/\s+/);
+    return parts.length >= 2
+      ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+      : name.slice(0, 2).toUpperCase();
+  };
 
   useEffect(() => {
     // Fetch reviews
@@ -203,15 +211,7 @@ function Home() {
                     </div>
                     <p className="review-quote">"{r.comment}"</p>
                     <div className="review-author">
-                      {r.customerId?.profilePicture ? (
-                        <img
-                          src={r.customerId.profilePicture}
-                          alt="Customer"
-                          style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }}
-                        />
-                      ) : (
-                        <div className="author-initial">{r.customerId?.name?.charAt(0) || '?'}</div>
-                      )}
+                      <div className="author-initial">{getInitials(r.customerId?.name)}</div>
                       <div className="author-info">
                         <h4>{r.customerId?.name || 'Anonymous User'}</h4>
                         <span>Booked: {r.bookingId?.serviceId?.title || 'Unknown Service'}</span>
@@ -227,15 +227,7 @@ function Home() {
                     </div>
                     <p className="review-quote">"{r.comment}"</p>
                     <div className="review-author">
-                      {r.customerId?.profilePicture ? (
-                        <img
-                          src={r.customerId.profilePicture}
-                          alt="Customer"
-                          style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }}
-                        />
-                      ) : (
-                        <div className="author-initial">{r.customerId?.name?.charAt(0) || '?'}</div>
-                      )}
+                      <div className="author-initial">{getInitials(r.customerId?.name)}</div>
                       <div className="author-info">
                         <h4>{r.customerId?.name || 'Anonymous User'}</h4>
                         <span>Booked: {r.bookingId?.serviceId?.title || 'Unknown Service'}</span>

@@ -40,7 +40,11 @@ function MyBookings() {
   const filteredBookings = bookings
     .filter(b => b.providerId?.name?.toLowerCase().includes(search.toLowerCase()) || b.serviceId?.title?.toLowerCase().includes(search.toLowerCase()))
     .sort((a, b) => {
-      // Sort by Date + Time descending
+      // Sort by Created At Timestamp (Latest first)
+      if (a.createdAt && b.createdAt) {
+        return new Date(b.createdAt) - new Date(a.createdAt);
+      }
+      // Fallback: Sort by Service Date + Time descending
       const dateA = new Date(`${a.date} ${a.time}`);
       const dateB = new Date(`${b.date} ${b.time}`);
       return dateB - dateA;

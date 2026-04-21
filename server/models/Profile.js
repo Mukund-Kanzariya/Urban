@@ -35,8 +35,6 @@ const profileSchema = new mongoose.Schema({
   rating: { type: Number, default: 0 },
   total_reviews: { type: Number, default: 0 },
   
-  // For Customers
-  preferredContact: { type: String, default: 'Email' },
   
   // For Admins
   department: { type: String, default: '' }

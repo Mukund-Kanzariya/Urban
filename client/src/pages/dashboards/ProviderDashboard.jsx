@@ -12,25 +12,51 @@ function ProviderDashboard() {
   const navigate = useNavigate();
 
   const [newService, setNewService] = useState({
-    title: '', category: '', price: '', location: ''
+    title: '', category: '', price: '', location: '', image: null
   });
 
   // ─── Update Modal State ─────────────────────────────────────────
   const [modal, setModal] = useState(null);  // { data: service }
+  
+  const getInitials = (name = '') => {
+    if (!name) return '?';
+    const parts = name.trim().split(/\s+/);
+    return parts.length >= 2
+      ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+      : name.slice(0, 2).toUpperCase();
+  };
   const [modalForm, setModalForm] = useState({});
   const [saving, setSaving] = useState(false);
 
   const openModal = (service) => {
     setModal({ data: service });
-    setModalForm({ title: service.title, category: service.category, price: service.price, location: service.location });
+    setModalForm({ 
+      title: service.title, 
+      category: service.category, 
+      price: service.price, 
+      location: service.location,
+      image: null // New file if user selects one
+    });
   };
   const closeModal = () => { setModal(null); setModalForm({}); };
 
   const handleSave = async () => {
     if (!modal) return;
     setSaving(true);
+
+    const formData = new FormData();
+    formData.append('title', modalForm.title);
+    formData.append('category', modalForm.category);
+    formData.append('price', modalForm.price);
+    formData.append('location', modalForm.location);
+    if (modalForm.image) {
+      formData.append('image', modalForm.image);
+    }
+
     try {
-      await axios.put(`/api/services/${modal.data._id}`, modalForm);
+      await axios.put(`/api/services/${modal.data._id}`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
       fetchData();
       closeModal();
       alert('Service updated successfully!');
@@ -59,7 +85,10 @@ function ProviderDashboard() {
         axios.get('/api/profiles/me')
       ]);
       setData({
-        bookings: bookingsRes.data,
+        bookings: bookingsRes.data.sort((a, b) => {
+          if (a.createdAt && b.createdAt) return new Date(b.createdAt) - new Date(a.createdAt);
+          return new Date(b.date + ' ' + b.time) - new Date(a.date + ' ' + a.time);
+        }),
         services: servicesRes.data,
         reviews: reviewsRes.data,
         categories: categoriesRes.data
@@ -93,9 +122,20 @@ function ProviderDashboard() {
 
   const handleCreateService = async (e) => {
     e.preventDefault();
+    const formData = new FormData();
+    formData.append('title', newService.title);
+    formData.append('category', newService.category);
+    formData.append('price', newService.price);
+    formData.append('location', newService.location);
+    if (newService.image) {
+      formData.append('image', newService.image);
+    }
+
     try {
-      await axios.post('/api/services', newService);
-      setNewService({ title: '', category: '', price: '', location: '' });
+      await axios.post('/api/services', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      setNewService({ title: '', category: '', price: '', location: '', image: null });
       fetchData(); // Refresh services automatically
       alert('Service added successfully!');
       setActiveTab('services'); // Auto-switch back to services list
@@ -162,6 +202,11 @@ function ProviderDashboard() {
                 <label>Location</label>
                 <input type="text" value={modalForm.location || ''}
                   onChange={(e) => setModalForm({ ...modalForm, location: e.target.value })} />
+              </div>
+              <div className="modal-field">
+                <label>Update Service Image</label>
+                <input type="file" accept="image/*"
+                  onChange={(e) => setModalForm({ ...modalForm, image: e.target.files[0] })} />
               </div>
             </div>
             <div className="modal-footer">
@@ -268,13 +313,9 @@ function ProviderDashboard() {
                       <span className={`status-badge status-${b.status.toLowerCase()}`}>{b.status}</span>
                     </div>
                     <div className="item-details" style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '0.5rem' }}>
-                      {b.customerId?.profilePicture ? (
-                        <img src={b.customerId.profilePicture} alt="" className="table-avatar-img" style={{ width: '40px', height: '40px' }} />
-                      ) : (
-                        <div className="table-avatar" style={{ width: '40px', height: '40px', background: '#3b82f6', fontSize: '0.9rem' }}>
-                          {(b.customerId?.name || 'C').charAt(0).toUpperCase()}
-                        </div>
-                      )}
+                      <div className="table-avatar" style={{ width: '40px', height: '40px', background: '#3b82f6', fontSize: '0.9rem' }}>
+                        {getInitials(b.customerId?.name)}
+                      </div>
                       <div>
                         <p style={{ margin: 0 }}><strong>Customer:</strong> {b.customerId?.name}</p>
                         <p style={{ margin: '0.2rem 0', fontSize: '0.9rem' }}><strong>Address:</strong> {b.service_address || b.address || 'Address not provided'}</p>
@@ -320,13 +361,13 @@ function ProviderDashboard() {
                 {data.services.map(s => (
                   <tr key={s._id}>
                     <td className="avatar-cell">
-                      {s.providerPhoto ? (
-                        <img src={s.providerPhoto} alt="" className="table-avatar-img" />
-                      ) : (
-                        <div className="table-avatar" style={{ background: '#10b981' }}>
-                          {(s.providerName || 'P').charAt(0).toUpperCase()}
-                        </div>
-                      )}
+                      <div className="table-avatar" style={{ background: '#10b981', overflow: 'hidden' }}>
+                        {s.image ? (
+                          <img src={s.image} alt={s.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        ) : (
+                          getInitials(s.providerName || user.name)
+                        )}
+                      </div>
                     </td>
                     <td>{s.title}</td><td>{s.category}</td><td>Rs. {s.price}</td><td>{s.location}</td>
                     <td className="action-cell">
@@ -376,6 +417,12 @@ function ProviderDashboard() {
                 <input type="text" placeholder="e.g., Downtown Area" required
                   style={{ width: '100%', padding: '0.75rem', border: '1px solid var(--border)', borderRadius: '8px' }}
                   value={newService.location} onChange={(e) => setNewService({ ...newService, location: e.target.value })} />
+              </div>
+              <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+                <label>Service Image (Optional)</label>
+                <input type="file" accept="image/*"
+                  style={{ width: '100%', padding: '0.75rem', border: '1px solid var(--border)', borderRadius: '8px' }}
+                  onChange={(e) => setNewService({ ...newService, image: e.target.files[0] })} />
               </div>
               <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '1rem', fontSize: '1.1rem' }}>Post Service Securely</button>
             </form>

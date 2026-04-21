@@ -8,6 +8,14 @@ const Experts = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+  
+  const getInitials = (name = '') => {
+    if (!name) return '?';
+    const parts = name.trim().split(/\s+/);
+    return parts.length >= 2
+      ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+      : name.slice(0, 2).toUpperCase();
+  };
 
   useEffect(() => {
     const fetchExperts = async () => {
@@ -76,10 +84,10 @@ const Experts = () => {
           filteredExperts.map(expert => (
             <div key={expert._id} className="expert-card">
               <div className="expert-photo-wrapper">
-                {expert.profileData?.profile_image || expert.profileData?.profilePicture ? (
-                  <img src={expert.profileData.profile_image || expert.profileData.profilePicture} alt={expert.name} className="expert-photo" />
+                {expert.profileData?.profilePicture ? (
+                  <img src={expert.profileData.profilePicture} alt={expert.name} className="expert-photo" />
                 ) : (
-                  <div className="expert-initials">{expert.name.charAt(0).toUpperCase()}</div>
+                  <div className="expert-initials">{getInitials(expert.name)}</div>
                 )}
                 {expert.profileData?.experienceYears && (
                   <span className="experience-badge">{expert.profileData.experienceYears}+ Yrs</span>

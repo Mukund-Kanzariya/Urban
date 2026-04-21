@@ -10,6 +10,14 @@ function AdminDashboard() {
   const user = JSON.parse(sessionStorage.getItem('user')) || {};
   const navigate = useNavigate();
 
+  const getInitials = (name = '') => {
+    if (!name) return '?';
+    const parts = name.trim().split(/\s+/);
+    return parts.length >= 2
+      ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+      : name.slice(0, 2).toUpperCase();
+  };
+
   // ─── Modal State ───────────────────────────────────────────────
   const [modal, setModal] = useState(null); // { type: 'user'|'service'|'review', data: {...} }
   const [modalForm, setModalForm] = useState({});
@@ -24,7 +32,7 @@ function AdminDashboard() {
     try {
       setLoading(true);
       console.log('Fetching all dashboard data...');
-      
+
       const results = await Promise.allSettled([
         axios.get('/api/users'),       // 0
         axios.get('/api/services'),    // 1
@@ -37,7 +45,10 @@ function AdminDashboard() {
       const newData = {
         users: results[0].status === 'fulfilled' ? results[0].value.data : [],
         services: results[1].status === 'fulfilled' ? results[1].value.data : [],
-        bookings: results[2].status === 'fulfilled' ? results[2].value.data : [],
+        bookings: (results[2].status === 'fulfilled' ? results[2].value.data : []).sort((a, b) => {
+          if (a.createdAt && b.createdAt) return new Date(b.createdAt) - new Date(a.createdAt);
+          return new Date(b.date + ' ' + b.time) - new Date(a.date + ' ' + a.time);
+        }),
         contacts: results[3].status === 'fulfilled' ? results[3].value.data : [],
         reviews: results[4].status === 'fulfilled' ? results[4].value.data : [],
         categories: results[5].status === 'fulfilled' ? results[5].value.data : []
@@ -60,9 +71,15 @@ function AdminDashboard() {
   const openModal = (type, item) => {
     setModal({ type, data: item });
     if (type === 'addUser') setModalForm({ name: '', email: '', password: '', role: 'customer' });
-    if (type === 'user')    setModalForm({ name: item.name, role: item.role });
-    if (type === 'service') setModalForm({ title: item.title, category: item.category, price: item.price, location: item.location });
-    if (type === 'review')  setModalForm({ rating: item.rating, comment: item.comment });
+    if (type === 'user') setModalForm({ name: item.name, role: item.role });
+    if (type === 'service') setModalForm({
+      title: item.title,
+      category: item.category,
+      price: item.price,
+      location: item.location,
+      image: null // New file if selected
+    });
+    if (type === 'review') setModalForm({ rating: item.rating, comment: item.comment });
     if (type === 'category') setModalForm({ name: item.name || '', description: item.description || '' });
   };
 
@@ -75,9 +92,21 @@ function AdminDashboard() {
     try {
       const { type, data: item } = modal;
       if (type === 'addUser') await axios.post('/api/users', modalForm);
-      if (type === 'user')    await axios.put(`/api/users/${item._id}`, modalForm);
-      if (type === 'service') await axios.put(`/api/services/${item._id}`, modalForm);
-      if (type === 'review')  await axios.put(`/api/reviews/${item._id}`, modalForm);
+      if (type === 'user') await axios.put(`/api/users/${item._id}`, modalForm);
+      if (type === 'service') {
+        const formData = new FormData();
+        formData.append('title', modalForm.title);
+        formData.append('category', modalForm.category);
+        formData.append('price', modalForm.price);
+        formData.append('location', modalForm.location);
+        if (modalForm.image) {
+          formData.append('image', modalForm.image);
+        }
+        await axios.put(`/api/services/${item._id}`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+      }
+      if (type === 'review') await axios.put(`/api/reviews/${item._id}`, modalForm);
       if (type === 'category') {
         if (item?._id) await axios.put(`/api/categories/${item._id}`, modalForm);
         else await axios.post('/api/categories', modalForm);
@@ -141,9 +170,9 @@ function AdminDashboard() {
             <div className="modal-header">
               <h3>
                 {modal.type === 'addUser' && '➕ Add User'}
-                {modal.type === 'user'    && '✏️ Update User'}
+                {modal.type === 'user' && '✏️ Update User'}
                 {modal.type === 'service' && '✏️ Update Service'}
-                {modal.type === 'review'  && '✏️ Update Review'}
+                {modal.type === 'review' && '✏️ Update Review'}
                 {modal.type === 'category' && (modal.data?._id ? '✏️ Update Category' : '➕ Add New Category')}
               </h3>
               <button className="modal-close" onClick={closeModal}>✕</button>
@@ -229,6 +258,11 @@ function AdminDashboard() {
                     <input type="text" value={modalForm.location || ''}
                       onChange={(e) => setModalForm({ ...modalForm, location: e.target.value })} />
                   </div>
+                  <div className="modal-field">
+                    <label>Update Service Image</label>
+                    <input type="file" accept="image/*"
+                      onChange={(e) => setModalForm({ ...modalForm, image: e.target.files[0] })} />
+                  </div>
                 </>
               )}
 
@@ -239,7 +273,7 @@ function AdminDashboard() {
                     <label>Rating (1–5)</label>
                     <select value={modalForm.rating || 5}
                       onChange={(e) => setModalForm({ ...modalForm, rating: Number(e.target.value) })}>
-                      {[1,2,3,4,5].map(n => <option key={n} value={n}>{n} ★</option>)}
+                      {[1, 2, 3, 4, 5].map(n => <option key={n} value={n}>{n} ★</option>)}
                     </select>
                   </div>
                   <div className="modal-field">
@@ -282,13 +316,13 @@ function AdminDashboard() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
           <h2 style={{ margin: 0 }}>Admin Control Center</h2>
           {user.role === 'super_admin' && (
-            <span style={{ 
-              background: 'linear-gradient(135deg, #6366f1, #4f46e5)', 
-              color: 'white', 
-              padding: '0.4rem 1rem', 
-              borderRadius: '100px', 
-              fontSize: '0.75rem', 
-              fontWeight: '800', 
+            <span style={{
+              background: 'linear-gradient(135deg, #6366f1, #4f46e5)',
+              color: 'white',
+              padding: '0.4rem 1rem',
+              borderRadius: '100px',
+              fontSize: '0.75rem',
+              fontWeight: '800',
               textTransform: 'uppercase',
               boxShadow: '0 4px 6px rgba(99, 102, 241, 0.2)'
             }}>
@@ -297,13 +331,13 @@ function AdminDashboard() {
           )}
         </div>
         <div className="admin-tabs">
-          <button className={`tab ${activeTab === 'metrics'  ? 'active' : ''}`} onClick={() => setActiveTab('metrics')}>Overview</button>
-          <button className={`tab ${activeTab === 'users'    ? 'active' : ''}`} onClick={() => setActiveTab('users')}>Users</button>
+          <button className={`tab ${activeTab === 'metrics' ? 'active' : ''}`} onClick={() => setActiveTab('metrics')}>Overview</button>
+          <button className={`tab ${activeTab === 'users' ? 'active' : ''}`} onClick={() => setActiveTab('users')}>Users</button>
           <button className={`tab ${activeTab === 'services' ? 'active' : ''}`} onClick={() => setActiveTab('services')}>Services</button>
           <button className={`tab ${activeTab === 'bookings' ? 'active' : ''}`} onClick={() => setActiveTab('bookings')}>Bookings</button>
           <button className={`tab ${activeTab === 'categories' ? 'active' : ''}`} onClick={() => setActiveTab('categories')}>Categories</button>
           <button className={`tab ${activeTab === 'contacts' ? 'active' : ''}`} onClick={() => setActiveTab('contacts')}>Messages</button>
-          <button className={`tab ${activeTab === 'reviews'  ? 'active' : ''}`} onClick={() => setActiveTab('reviews')}>Reviews</button>
+          <button className={`tab ${activeTab === 'reviews' ? 'active' : ''}`} onClick={() => setActiveTab('reviews')}>Reviews</button>
         </div>
       </header>
 
@@ -329,42 +363,38 @@ function AdminDashboard() {
               </div>
             )}
             <table className="data-table">
-                <thead>
-                  <tr>
-                    <th className="avatar-cell">Photo</th>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>Role</th>
-                    {user.role === 'super_admin' && <th style={{ textAlign: 'right' }}>Actions</th>}
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.users.map(u => (
-                    <tr key={u._id}>
-                      <td className="avatar-cell">
-                        {u.profilePicture ? (
-                          <img src={u.profilePicture} alt="" className="table-avatar-img" />
-                        ) : (
-                          <div className="table-avatar" style={{ background: u.role === 'admin' ? '#4f46e5' : (u.role === 'provider' ? '#10b981' : '#3b82f6') }}>
-                            {u.name.charAt(0).toUpperCase()}
-                          </div>
-                        )}
+              <thead>
+                <tr>
+                  <th className="avatar-cell">Photo</th>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Role</th>
+                  {user.role === 'super_admin' && <th style={{ textAlign: 'right' }}>Actions</th>}
+                </tr>
+              </thead>
+              <tbody>
+                {data.users.map(u => (
+                  <tr key={u._id}>
+                    <td className="avatar-cell">
+                      <div className="table-avatar" style={{ background: u.role === 'admin' ? '#4f46e5' : (u.role === 'provider' ? '#10b981' : '#3b82f6') }}>
+                        {getInitials(u.name)}
+                      </div>
+                    </td>
+                    <td style={{ fontWeight: '500' }}>{u.name}</td>
+                    <td>{u.email}</td>
+                    <td><span className={`role-badge role-${u.role}`}>{u.role}</span></td>
+                    {user.role === 'super_admin' && (
+                      <td className="action-cell" style={{ justifyContent: 'flex-end' }}>
+                        <button className="btn btn-warning btn-sm" onClick={() => openModal('user', u)}>Update</button>
+                        <button className="btn btn-danger btn-sm" onClick={() => deleteUser(u._id)}>Delete</button>
                       </td>
-                      <td style={{ fontWeight: '500' }}>{u.name}</td>
-                      <td>{u.email}</td>
-                      <td><span className={`role-badge role-${u.role}`}>{u.role}</span></td>
-                      {user.role === 'super_admin' && (
-                        <td className="action-cell" style={{ justifyContent: 'flex-end' }}>
-                          <button className="btn btn-warning btn-sm" onClick={() => openModal('user', u)}>Update</button>
-                          <button className="btn btn-danger btn-sm"  onClick={() => deleteUser(u._id)}>Delete</button>
-                        </td>
-                      )}
-                    </tr>
-                  ))}
-                  {data.users.length === 0 && (
-                    <tr><td colSpan={user.role === 'super_admin' ? "5" : "4"} className="empty-state" style={{ textAlign: 'center', padding: '2rem' }}>No users found or error fetching users.</td></tr>
-                  )}
-                </tbody>
+                    )}
+                  </tr>
+                ))}
+                {data.users.length === 0 && (
+                  <tr><td colSpan={user.role === 'super_admin' ? "5" : "4"} className="empty-state" style={{ textAlign: 'center', padding: '2rem' }}>No users found or error fetching users.</td></tr>
+                )}
+              </tbody>
             </table>
           </div>
         )}
@@ -373,43 +403,49 @@ function AdminDashboard() {
         {activeTab === 'services' && (
           <div className="data-table-container">
             <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Title</th>
-                    <th>Category</th>
-                    <th>Price</th>
-                    <th>Provider</th>
-                    <th style={{ textAlign: 'right' }}>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.services.map(s => (
-                    <tr key={s._id}>
-                      <td style={{ fontWeight: '500' }}>{s.title}</td>
-                      <td>{s.category}</td>
-                      <td>Rs. {s.price}</td>
-                      <td>
-                        <div className="info-with-photo">
-                          {s.providerPhoto ? (
-                            <img src={s.providerPhoto} alt="" className="table-avatar-img" />
-                          ) : (
-                            <div className="table-avatar" style={{ background: '#10b981' }}>
-                              {(s.providerName || 'P').charAt(0).toUpperCase()}
-                            </div>
-                          )}
-                          <span>{s.providerName}</span>
+              <thead>
+                <tr>
+                  <th className="avatar-cell">Photo</th>
+                  <th>Title</th>
+                  <th>Category</th>
+                  <th>Price</th>
+                  <th>Provider</th>
+                  <th style={{ textAlign: 'right' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.services.map(s => (
+                  <tr key={s._id}>
+                    <td className="avatar-cell">
+                      <div className="table-avatar" style={{ background: '#3b82f6', overflow: 'hidden' }}>
+                        {s.image ? (
+                          <img src={s.image} alt={s.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        ) : (
+                          'S'
+                        )}
+                      </div>
+                    </td>
+                    <td style={{ fontWeight: '500' }}>{s.title}</td>
+                    <td>{s.category}</td>
+                    <td>Rs. {s.price}</td>
+                    <td>
+                      <div className="info-with-photo">
+                        <div className="table-avatar" style={{ background: '#10b981' }}>
+                          {getInitials(s.providerName)}
                         </div>
-                      </td>
-                      <td className="action-cell">
-                        <button className="btn btn-warning btn-sm" onClick={() => openModal('service', s)}>Update</button>
-                        <button className="btn btn-danger btn-sm"  onClick={() => deleteService(s._id)}>Delete</button>
-                      </td>
-                    </tr>
-                  ))}
-                  {data.services.length === 0 && (
-                    <tr><td colSpan="5" className="empty-state" style={{ textAlign: 'center', padding: '2rem' }}>No services found or error fetching services.</td></tr>
-                  )}
-                </tbody>
+                        <span>{s.providerName}</span>
+                      </div>
+                    </td>
+                    <td className="action-cell">
+                      <button className="btn btn-warning btn-sm" onClick={() => openModal('service', s)}>Update</button>
+                      <button className="btn btn-danger btn-sm" onClick={() => deleteService(s._id)}>Delete</button>
+                    </td>
+                  </tr>
+                ))}
+                {data.services.length === 0 && (
+                  <tr><td colSpan="5" className="empty-state" style={{ textAlign: 'center', padding: '2rem' }}>No services found or error fetching services.</td></tr>
+                )}
+              </tbody>
             </table>
           </div>
         )}
@@ -433,13 +469,9 @@ function AdminDashboard() {
                     <td>{b.serviceId?.title}</td>
                     <td>
                       <div className="info-with-photo">
-                        {b.customerId?.profilePicture ? (
-                          <img src={b.customerId.profilePicture} alt="" className="table-avatar-img" />
-                        ) : (
-                          <div className="table-avatar" style={{ background: '#3b82f6' }}>
-                            {(b.customerId?.name || 'C').charAt(0).toUpperCase()}
-                          </div>
-                        )}
+                        <div className="table-avatar" style={{ background: '#3b82f6' }}>
+                          {getInitials(b.customerId?.name)}
+                        </div>
                         <span>{b.customerId?.name}</span>
                       </div>
                     </td>
@@ -450,7 +482,7 @@ function AdminDashboard() {
                         <div><strong>Provider:</strong> Rs. {b.provider_earns || b.providerEarn || ((b.price || b.totalCost || b.serviceId?.price || 0) * 0.8).toFixed(2)}</div>
                         <div style={{ color: '#4f46e5' }}><strong>Admin:</strong> Rs. {b.commission || ((b.price || b.totalCost || b.serviceId?.price || 0) * 0.2).toFixed(2)}</div>
                         <div style={{ marginTop: '0.2rem', textTransform: 'capitalize' }}>
-                          <strong style={{ color: '#6b7280' }}>Payment:</strong> <span style={{ color: b.payment?.paymentStatus === 'completed' ? '#10b981' : '#ef4444', fontWeight: 'bold' }}>{b.payment?.paymentStatus || 'pending'}</span> <span style={{fontSize: '0.75rem', color: '#6b7280'}}>(via {b.payment?.paymentMethod || 'cash'})</span>
+                          <strong style={{ color: '#6b7280' }}>Payment:</strong> <span style={{ color: b.payment?.paymentStatus === 'completed' ? '#10b981' : '#ef4444', fontWeight: 'bold' }}>{b.payment?.paymentStatus || 'pending'}</span> <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>(via {b.payment?.paymentMethod || 'cash'})</span>
                         </div>
                       </div>
                     </td>
@@ -496,43 +528,39 @@ function AdminDashboard() {
         {activeTab === 'reviews' && (
           <div className="data-table-container">
             <table className="data-table">
-                <thead>
-                  <tr>
-                    <th className="avatar-cell">Photo</th>
-                    <th>Customer</th>
-                    <th>Service</th>
-                    <th>Provider</th>
-                    <th>Rating</th>
-                    <th>Comment</th>
-                    <th style={{ textAlign: 'right' }}>Actions</th>
+              <thead>
+                <tr>
+                  <th className="avatar-cell">Photo</th>
+                  <th>Customer</th>
+                  <th>Service</th>
+                  <th>Provider</th>
+                  <th>Rating</th>
+                  <th>Comment</th>
+                  <th style={{ textAlign: 'right' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.reviews.map(r => (
+                  <tr key={r._id}>
+                    <td className="avatar-cell">
+                      <div className="table-avatar" style={{ background: '#3b82f6' }}>
+                        {getInitials(r.customerId?.name)}
+                      </div>
+                    </td>
+                    <td style={{ fontWeight: '500' }}>{r.customerId?.name || 'Unknown'}</td>
+                    <td>{r.bookingId?.serviceId?.title || 'Unknown'}</td>
+                    <td>{r.bookingId?.providerId?.name || 'Unknown'}</td>
+                    <td style={{ color: '#fbbf24', fontSize: '1.1rem' }}>{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</td>
+                    <td style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.comment}</td>
+                    <td className="action-cell">
+                      <button className="btn btn-danger btn-sm" onClick={() => deleteReview(r._id)}>Delete</button>
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {data.reviews.map(r => (
-                    <tr key={r._id}>
-                      <td className="avatar-cell">
-                        {r.customerId?.profilePicture ? (
-                          <img src={r.customerId.profilePicture} alt="" className="table-avatar-img" />
-                        ) : (
-                          <div className="table-avatar" style={{ background: '#3b82f6' }}>
-                            {(r.customerId?.name || 'C').charAt(0).toUpperCase()}
-                          </div>
-                        )}
-                      </td>
-                      <td style={{ fontWeight: '500' }}>{r.customerId?.name || 'Unknown'}</td>
-                      <td>{r.bookingId?.serviceId?.title || 'Unknown'}</td>
-                      <td>{r.bookingId?.providerId?.name || 'Unknown'}</td>
-                      <td style={{ color: '#fbbf24', fontSize: '1.1rem' }}>{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</td>
-                      <td style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.comment}</td>
-                      <td className="action-cell">
-                        <button className="btn btn-danger btn-sm"  onClick={() => deleteReview(r._id)}>Delete</button>
-                      </td>
-                    </tr>
-                  ))}
-                  {data.reviews.length === 0 && (
-                    <tr><td colSpan="7" className="empty-state">No reviews have been written yet.</td></tr>
-                  )}
-                </tbody>
+                ))}
+                {data.reviews.length === 0 && (
+                  <tr><td colSpan="7" className="empty-state">No reviews have been written yet.</td></tr>
+                )}
+              </tbody>
             </table>
           </div>
         )}

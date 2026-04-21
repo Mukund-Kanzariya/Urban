@@ -69,7 +69,8 @@ router.get('/', verifyToken, async (req, res) => {
     const bookings = await Booking.find(query)
       .populate('serviceId', 'title price')
       .populate('customerId', 'name email')
-      .populate('providerId', 'name');
+      .populate('providerId', 'name')
+      .sort({ createdAt: -1, _id: -1 });
 
     // Fetch profiles for the customers involved
     const customerIds = bookings.map(b => b.customerId?._id);

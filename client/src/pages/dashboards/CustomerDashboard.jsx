@@ -24,7 +24,10 @@ function CustomerDashboard() {
         axios.get('/api/bookings'),
         axios.get('/api/services')
       ]);
-      setBookings(bookingsRes.data);
+      setBookings(bookingsRes.data.sort((a, b) => {
+        if (a.createdAt && b.createdAt) return new Date(b.createdAt) - new Date(a.createdAt);
+        return new Date(b.date + ' ' + b.time) - new Date(a.date + ' ' + a.time);
+      }));
       setServices(servicesRes.data);
       setLoading(false);
     } catch (err) {
@@ -70,20 +73,27 @@ function CustomerDashboard() {
           ) : (
             <div className="list-grid">
               {bookings.map((b) => (
-                <div key={b._id} className="item-card">
-                  <h4>{b.serviceId?.title}</h4>
-                  <div className="item-details">
-                    <p><strong>Provider:</strong> {b.providerId?.name}</p>
-                    <p><strong>Date & Time:</strong> {b.date} at {b.time}</p>
-                    <p><strong>Price:</strong> ${b.serviceId?.price}</p>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px' }}>
-                      <span className={`status-badge status-${b.status.toLowerCase()}`}>{b.status}</span>
-                      {b.status.toLowerCase() === 'completed' && (
+                 <div key={b._id} className="item-card">
+                  <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+                    {b.serviceId?.image && (
+                      <img src={b.serviceId.image} alt="" style={{ width: '60px', height: '60px', borderRadius: '8px', objectFit: 'cover' }} />
+                    )}
+                    <div style={{ flex: 1 }}>
+                      <h4 style={{ margin: 0 }}>{b.serviceId?.title}</h4>
+                      <div className="item-details" style={{ marginTop: '0.5rem' }}>
+                        <p style={{ margin: '0.2rem 0' }}><strong>Provider:</strong> {b.providerId?.name}</p>
+                        <p style={{ margin: '0.2rem 0' }}><strong>Date & Time:</strong> {b.date} at {b.time}</p>
+                        <p style={{ margin: '0.2rem 0' }}><strong>Price:</strong> Rs. {b.serviceId?.price || b.price}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px' }}>
+                    <span className={`status-badge status-${b.status.toLowerCase()}`}>{b.status}</span>
+                    {b.status.toLowerCase() === 'completed' && (
                         <button className="btn btn-primary btn-sm" onClick={() => handleLeaveReview(b._id)}>
                           Leave a Review
                         </button>
-                      )}
-                    </div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -97,9 +107,12 @@ function CustomerDashboard() {
           <div className="list-grid mini">
             {services.map(s => (
               <div key={s._id} className="item-card mini-card">
-                 <div className="mini-card-header">
-                   <h4>{s.title} <span>${s.price}</span></h4>
-                 </div>
+                  <div className="mini-card-header" style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                    {s.image && (
+                      <img src={s.image} alt="" style={{ width: '40px', height: '40px', borderRadius: '4px', objectFit: 'cover' }} />
+                    )}
+                    <h4 style={{ margin: 0, flex: 1 }}>{s.title} <span style={{ float: 'right' }}>Rs. {s.price}</span></h4>
+                  </div>
                  <p className="small-text">{s.providerId?.name} - {s.location}</p>
                  <button className="btn btn-primary btn-sm" onClick={() => handleBookService(s._id, s.providerId?._id)}>
                    Book Now

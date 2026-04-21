@@ -13,13 +13,14 @@ function Profile() {
     hourlyRate: '',
     price_per_hour: 0,
     experienceYears: '',
-    preferredContact: 'Email',
+    experienceYears: '',
     department: '',
     availability_status: 'available',
     is_verified: false,
     profilePicture: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    name: '' // Added for core user update
   });
   const [baseUser, setBaseUser] = useState({ name: '', email: '', role: '' });
   const [status, setStatus] = useState({ type: '', msg: '' });
@@ -28,6 +29,14 @@ function Profile() {
   const [file, setFile] = useState(null);
 
   const navigate = useNavigate();
+  
+  const getInitials = (name = '') => {
+    if (!name) return '?';
+    const parts = name.trim().split(/\s+/);
+    return parts.length >= 2
+      ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+      : name.slice(0, 2).toUpperCase();
+  };
 
   useEffect(() => {
     if (!sessionStorage.getItem('token')) {
@@ -58,13 +67,13 @@ function Profile() {
           hourlyRate: data.hourlyRate || '',
           price_per_hour: data.price_per_hour || 0,
           experienceYears: data.experienceYears || '',
-          preferredContact: data.preferredContact || 'Email',
           department: data.department || '',
           availability_status: data.availability_status || 'available',
           is_verified: data.is_verified || false,
           profilePicture: data.profilePicture || '',
           password: '',
-          confirmPassword: ''
+          confirmPassword: '',
+          name: data.userId ? data.userId.name : ''
         });
 
         setLoading(false);
@@ -106,6 +115,22 @@ function Profile() {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       
+      if (res.data.userId) {
+        const updatedUser = {
+          _id: res.data.userId._id,
+          name: res.data.userId.name,
+          email: res.data.userId.email,
+          role: res.data.userId.role
+        };
+        setBaseUser({
+          id: updatedUser._id,
+          name: updatedUser.name,
+          email: updatedUser.email,
+          role: updatedUser.role
+        });
+        sessionStorage.setItem('user', JSON.stringify(updatedUser));
+      }
+
       if (res.data.profilePicture) {
         setProfile(prev => ({...prev, profilePicture: res.data.profilePicture}));
       }
@@ -144,20 +169,13 @@ function Profile() {
             <div className="profile-view-mode">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid var(--border)', paddingBottom: '1.5rem', marginBottom: '2rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-                  {profile.profilePicture ? (
-                    <img 
-                      src={profile.profilePicture} 
-                      alt="Profile" 
-                      style={{ width: '100px', height: '100px', borderRadius: '50%', objectFit: 'cover', border: '4px solid #fff', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} 
-                    />
-                  ) : (
-                    <div style={{
-                      width: '100px', height: '100px', borderRadius: '50%', backgroundColor: '#0ea5e9', color: 'white',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.5rem', fontWeight: 'bold'
-                    }}>
-                      {baseUser.name ? baseUser.name.charAt(0).toUpperCase() : '?'}
-                    </div>
-                  )}
+                  <div style={{
+                    width: '100px', height: '100px', borderRadius: '50%', backgroundColor: '#0ea5e9', color: 'white',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.5rem', fontWeight: 'bold',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                  }}>
+                    {getInitials(baseUser.name)}
+                  </div>
                   <div>
                     <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.6rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                       {baseUser.name}
@@ -236,6 +254,10 @@ function Profile() {
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                  <label>Full Display Name</label>
+                  <input type="text" name="name" value={profile.name} onChange={handleChange} placeholder="John Doe" />
+                </div>
                 <div className="form-group">
                   <label>Phone Number</label>
                   <input type="text" name="phone" value={profile.phone} onChange={handleChange} placeholder="+91 99999 99999" />

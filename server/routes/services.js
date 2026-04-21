@@ -3,7 +3,38 @@ const express = require('express');
 const mongoose = require('mongoose');
 const router = express.Router();
 const Service = require('../models/Service');
-const verifyToken = require('../middleware/auth'); // Import our JWT checker
+const verifyToken = require('../middleware/auth');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+
+// Ensure uploads/services directory exists
+const uploadDir = path.join(__dirname, '../uploads/services');
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+// Multer Storage Configuration
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, uploadDir); 
+    },
+    filename: function (req, file, cb) {
+        cb(null, 'service-' + Date.now() + path.extname(file.originalname));
+    }
+});
+
+const upload = multer({ 
+    storage: storage,
+    limits: { fileSize: 5000000 }, // 5MB
+    fileFilter: (req, file, cb) => {
+        if (file.mimetype.startsWith('image/')) {
+            cb(null, true);
+        } else {
+            cb(new Error('Only images are allowed!'), false);
+        }
+    }
+});
 
 // GET /api/services - View all services (Browsing feature)
 router.get('/', async (req, res) => {
@@ -62,23 +93,21 @@ router.get('/', async (req, res) => {
 });
 
 // POST /api/services - Add a new service
-// We use "verifyToken" to block strangers. ONLY logged in users pass this check.
-router.post('/', verifyToken, async (req, res) => {
+router.post('/', verifyToken, upload.single('image'), async (req, res) => {
   try {
-    // Ensure ONLY a provider role can create a service
     if (req.user.role !== 'provider') {
       return res.status(403).json({ error: 'Only providers can create services!' });
     }
 
     const { category, title, price, location } = req.body;
-
-    // Create the service, pulling their unique ID straight from their confirmed JWT Token
+    
     const newService = new Service({
       providerId: req.user._id, 
       category,
       title,
       price,
-      location
+      location,
+      image: req.file ? '/uploads/services/' + req.file.filename : null
     });
 
     const savedService = await newService.save();
@@ -120,17 +149,31 @@ router.get('/provider', verifyToken, async (req, res) => {
   }
 });
 
-// PUT /api/services/:id - Update a service (Admin or owning Provider)
-router.put('/:id', verifyToken, async (req, res) => {
+// PUT /api/services/:id - Update a service
+router.put('/:id', verifyToken, upload.single('image'), async (req, res) => {
   try {
     const service = await Service.findById(req.params.id);
     if (!service) return res.status(404).json({ error: 'Service not found' });
 
     if (req.user.role === 'admin' || (req.user.role === 'provider' && service.providerId.toString() === req.user._id.toString())) {
       const { title, category, price, location } = req.body;
+      
+      const updateData = { title, category, price, location };
+
+      if (req.file) {
+        // Delete old image if it exists
+        if (service.image) {
+          const oldImagePath = path.join(__dirname, '..', service.image);
+          if (fs.existsSync(oldImagePath)) {
+            fs.unlinkSync(oldImagePath);
+          }
+        }
+        updateData.image = '/uploads/services/' + req.file.filename;
+      }
+
       const updated = await Service.findByIdAndUpdate(
         req.params.id,
-        { title, category, price, location },
+        updateData,
         { new: true, runValidators: true }
       );
       return res.json(updated);
@@ -142,7 +185,7 @@ router.put('/:id', verifyToken, async (req, res) => {
   }
 });
 
-// DELETE /api/services/:id - Delete a service (Admin or owning Provider)
+// DELETE /api/services/:id - Delete a service
 router.delete('/:id', verifyToken, async (req, res) => {
   try {
     const service = await Service.findById(req.params.id);
@@ -151,6 +194,15 @@ router.delete('/:id', verifyToken, async (req, res) => {
     }
 
     if (req.user.role === 'admin' || (req.user.role === 'provider' && service.providerId.toString() === req.user._id.toString())) {
+      
+      // Delete associated image file
+      if (service.image) {
+        const imagePath = path.join(__dirname, '..', service.image);
+        if (fs.existsSync(imagePath)) {
+          fs.unlinkSync(imagePath);
+        }
+      }
+
       await Service.findByIdAndDelete(req.params.id);
       return res.json({ message: 'Service deleted successfully' });
     } else {

@@ -60,9 +60,7 @@ function Navbar() {
 
   const renderAvatar = (size = '') => {
     const sizeClass = size === 'lg' ? 'nav-avatar nav-avatar-lg' : 'nav-avatar';
-    if (profilePic) {
-      return <img src={profilePic} alt="" className={`${sizeClass} nav-avatar-img`} />;
-    }
+    // Logic changed to exclusively use initials as requested
     return (
       <span className={sizeClass} style={{ background: avatarBg }}>
         {getInitials(user?.name)}

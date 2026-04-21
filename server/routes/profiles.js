@@ -71,14 +71,14 @@ router.put('/me', verifyToken, upload.single('profilePicture'), async (req, res)
         const { 
           phone, address, city, bio,
           serviceCategory, hourlyRate, price_per_hour, experienceYears,
-          preferredContact, department, availability_status, password
+          department, availability_status, password, name
         } = req.body;
         
         // Build the update payload dynamically
         const updatePayload = {
             phone, address, city, bio,
             serviceCategory, hourlyRate, price_per_hour, experienceYears,
-            preferredContact, department, availability_status
+            department, availability_status
         };
 
         // If a file was uploaded by multer, embed the new URL path into the payload!
@@ -100,6 +100,7 @@ router.put('/me', verifyToken, upload.single('profilePicture'), async (req, res)
 
         // Sync Phone and Profile Image with User model as well
         const userUpdate = {};
+        if (name) userUpdate.name = name;
         if (phone) userUpdate.phone = phone;
         if (updatedProfile.profilePicture) userUpdate.profile_image = updatedProfile.profilePicture;
         

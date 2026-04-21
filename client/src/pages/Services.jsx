@@ -38,6 +38,14 @@ function Services() {
   const [services, setServices] = useState([]);
   const [categories, setCategories] = useState(['All']);
   const [filteredServices, setFilteredServices] = useState([]);
+  
+  const getInitials = (name = '') => {
+    if (!name) return '?';
+    const parts = name.trim().split(/\s+/);
+    return parts.length >= 2
+      ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+      : name.slice(0, 2).toUpperCase();
+  };
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [bookingModal, setBookingModal] = useState({ isOpen: false, serviceId: null, providerId: null, date: '', time: '', address: '', totalCost: 0, paymentMethod: 'cash' });
@@ -232,7 +240,7 @@ function Services() {
                   <div key={service._id} className="marketplace-card">
                     <div className="card-banner">
                       <img
-                        src={getDynamicImage(service.category + ' ' + service.title)}
+                        src={service.image || getDynamicImage(service.category + ' ' + service.title)}
                         alt={service.category}
                       />
                       <span className="category-badge">{service.category}</span>
@@ -243,7 +251,7 @@ function Services() {
 
                       <div className="card-provider">
                         <div className="card-provider-initials" style={{ position: 'relative' }}>
-                          {(service.providerName || 'P').charAt(0).toUpperCase()}
+                          {getInitials(service.providerName)}
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column' }}>
                           <span className="card-provider-name" style={{ lineHeight: '1.2' }}>{service.providerName || 'Professional'}</span>

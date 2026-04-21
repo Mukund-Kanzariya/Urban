@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { useNavigate,Link } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import '../css/Auth.css';
 
 function Register() {
@@ -16,7 +16,7 @@ function Register() {
     try {
       // 1. Ask Express to safely register our new user in MongoDB!
       await axios.post('/api/auth/register', { name, email, password, role });
-      
+
       // 2. Registration successful! Redirect them to the Login page automatically
       navigate('/login');
     } catch (err) {
@@ -35,7 +35,7 @@ function Register() {
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label>Full Name</label>
-            <input type="text" value={name} onChange={e => setName(e.target.value)} required placeholder="John Doe" />
+            <input type="text" value={name} onChange={e => setName(e.target.value)} required placeholder="Enter Your Name" />
           </div>
 
           <div className="form-group">
